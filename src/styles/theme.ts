@@ -27,6 +27,9 @@ export const theme = {
     neutralDark: "#404040", // CourierCard (hover del chat), CheckoutSummaryCard (ícono)
     neutralDarker: "#262626", // CheckoutSummaryCard (hover de "Pay by Card")
     addAction: "#1d411b", // KitCard (botón "Agregar")
+
+    // Acento cálido (dinamismo) — dashboard de Kits: stats, chart, pines de actividad, badges
+    accent: "#e07a5f",
   },
   gradient: {
     avatarWarm: "linear-gradient(to bottom right, #fde68a, #d4d4d4)", // TopNavbar (avatar)

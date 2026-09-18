@@ -4,8 +4,8 @@ import { motion } from "motion/react"
 export const Panel = styled(motion.aside)`
   display: flex;
   flex-direction: column;
-  width: 40rem;
-  flex-shrink: 0;
+  width: 100%;
+  flex: 1;
   min-height: 0;
 `
 

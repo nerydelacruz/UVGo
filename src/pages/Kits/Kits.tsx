@@ -1,9 +1,11 @@
-import { AnimatePresence } from "motion/react"
-import { useState } from "react"
 import { FiSearch } from "react-icons/fi"
 import KitCard, { type Kit } from "./components/KitCard/KitCard"
+import OrderStatusCard from "./components/OrderStatusCard/OrderStatusCard"
+import OrderTrendsChart from "./components/OrderTrendsChart/OrderTrendsChart"
+import StaffAnnouncements from "./components/StaffAnnouncements/StaffAnnouncements"
+import StatsBar from "./components/StatsBar/StatsBar"
 import Pedidos from "../Pedidos/Pedidos"
-import { Count, Grid, GridScroll, List, Page, SearchBox, Toolbar } from "./Kits.styles"
+import { Count, Grid, GridScroll, List, Page, RightColumn, SearchBox, Toolbar, TrendsRow } from "./Kits.styles"
 
 const kits: Kit[] = [
   {
@@ -58,11 +60,16 @@ const kits: Kit[] = [
 ]
 
 const Kits = () => {
-  const [showPedidos, setShowPedidos] = useState(false)
-
   return (
     <Page>
       <List>
+        <StatsBar />
+
+        <TrendsRow>
+          <OrderStatusCard />
+          <OrderTrendsChart />
+        </TrendsRow>
+
         <Toolbar>
           <Count>
             {kits.length} <span>Kits</span>
@@ -76,13 +83,16 @@ const Kits = () => {
         <GridScroll>
           <Grid>
             {kits.map((kit) => (
-              <KitCard key={kit.code} kit={kit} onAdd={() => setShowPedidos(true)} />
+              <KitCard key={kit.code} kit={kit} />
             ))}
           </Grid>
         </GridScroll>
       </List>
 
-      <AnimatePresence>{showPedidos && <Pedidos />}</AnimatePresence>
+      <RightColumn>
+        <StaffAnnouncements />
+        <Pedidos />
+      </RightColumn>
     </Page>
   )
 }

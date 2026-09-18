@@ -83,3 +83,21 @@ export const Grid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr));
   gap: ${(p) => p.theme.space.lg};
 `
+
+export const TrendsRow = styled.div`
+  display: flex;
+  gap: ${(p) => p.theme.space.lg};
+
+  @media (max-width: ${(p) => p.theme.breakpoint.lg}) {
+    flex-direction: column;
+  }
+`
+
+export const RightColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${(p) => p.theme.space.lg};
+  width: 34rem;
+  flex-shrink: 0;
+  min-height: 0;
+`
