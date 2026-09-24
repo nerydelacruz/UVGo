@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react"
 import { FiSearch } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
 import KitCard from "./components/KitCard/KitCard"
@@ -9,9 +10,22 @@ import StatsBar from "./components/StatsBar/StatsBar"
 import Pedidos from "../Pedidos/Pedidos"
 import { Count, Grid, GridScroll, List, Page, RightColumn, SearchBox, Toolbar, TrendsRow } from "./Kits.styles"
 
+// minúsculas y sin tildes: "quimica" encuentra "Química"
+const normalize = (text: string) =>
+  text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
 const Kits = () => {
   const { data: kits = [], isLoading, isError } = useKits()
   const navigate = useNavigate()
+  const [search, setSearch] = useState("")
+
+  const filteredKits = useMemo(() => {
+    const term = normalize(search.trim())
+    if (!term) return kits
+    return kits.filter((kit) =>
+      [kit.name, kit.course, kit.description].some((field) => normalize(field).includes(term)),
+    )
+  }, [kits, search])
 
   return (
     <Page>
@@ -25,19 +39,26 @@ const Kits = () => {
 
         <Toolbar>
           <Count>
-            {kits.length} <span>Kits</span>
+            {filteredKits.length} <span>Kits</span>
           </Count>
           <SearchBox>
             <FiSearch size={18} />
-            <input placeholder="Buscar kit..." />
+            <input
+              placeholder="Buscar kit..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </SearchBox>
         </Toolbar>
 
         <GridScroll>
           {isLoading && <p>Cargando kits...</p>}
           {isError && <p>Error al cargar los kits</p>}
+          {!isLoading && !isError && search.trim() && filteredKits.length === 0 && (
+            <p>No se encontraron kits para "{search.trim()}"</p>
+          )}
           <Grid>
-            {kits.map((kit) => (
+            {filteredKits.map((kit) => (
               <KitCard
                 key={kit.kitId}
                 kit={kit}
