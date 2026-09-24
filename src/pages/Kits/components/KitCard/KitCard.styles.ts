@@ -146,3 +146,26 @@ export const StatBadge = styled.div<{ tone: "primary" | "warning" }>`
   background: ${(p) => p.theme.color.surface};
   color: ${(p) => (p.tone === "primary" ? p.theme.color.primary : p.theme.color.warning)};
 `
+
+export const Actions = styled.div`
+  display: flex;
+  gap: 1rem;
+`
+
+export const DetailButton = styled.button`
+  margin-top: 1.2rem;
+  width: 100%;
+  border-radius: ${(p) => p.theme.radius.md};
+  padding: 1rem 0;
+  font-size: 1.2rem;
+  font-weight: ${(p) => p.theme.font.weight.semibold};
+  color: ${(p) => p.theme.color.addAction};
+  background: transparent;
+  border: 2px solid ${(p) => p.theme.color.addAction};
+  transition: background 150ms ease, color 150ms ease;
+
+  &:hover {
+    background: ${(p) => p.theme.color.addAction};
+    color: white;
+  }
+`

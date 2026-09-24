@@ -1,5 +1,7 @@
 import { FiSearch } from "react-icons/fi"
-import KitCard, { type Kit } from "./components/KitCard/KitCard"
+import { useNavigate } from "react-router-dom"
+import KitCard from "./components/KitCard/KitCard"
+import { useKits } from "@/hooks/useKits"
 import OrderStatusCard from "./components/OrderStatusCard/OrderStatusCard"
 import OrderTrendsChart from "./components/OrderTrendsChart/OrderTrendsChart"
 import StaffAnnouncements from "./components/StaffAnnouncements/StaffAnnouncements"
@@ -7,59 +9,10 @@ import StatsBar from "./components/StatsBar/StatsBar"
 import Pedidos from "../Pedidos/Pedidos"
 import { Count, Grid, GridScroll, List, Page, RightColumn, SearchBox, Toolbar, TrendsRow } from "./Kits.styles"
 
-const kits: Kit[] = [
-  {
-    code: "MAT-101",
-    name: "Kit de Laboratorio",
-    description: "Materiales básicos para prácticas de laboratorio.",
-    price: "45.00",
-    available: 12,
-  },
-  {
-    code: "MAT-101",
-    name: "Kit de Laboratorio",
-    description: "Materiales básicos para prácticas de laboratorio.",
-    price: "45.00",
-    available: 12,
-  },
-  {
-    code: "MAT-101",
-    name: "Kit de Laboratorio",
-    description: "Materiales básicos para prácticas de laboratorio.",
-    price: "45.00",
-    available: 12,
-  },
-  {
-    code: "MAT-101",
-    name: "Kit de Laboratorio",
-    description: "Materiales básicos para prácticas de laboratorio.",
-    price: "45.00",
-    available: 12,
-  },
-  {
-    code: "MAT-101",
-    name: "Kit de Laboratorio",
-    description: "Materiales básicos para prácticas de laboratorio.",
-    price: "45.00",
-    available: 12,
-  },
-  {
-    code: "MAT-101",
-    name: "Kit de Laboratorio",
-    description: "Materiales básicos para prácticas de laboratorio.",
-    price: "45.00",
-    available: 12,
-  },
-  {
-    code: "MAT-101",
-    name: "Kit de Laboratorio",
-    description: "Materiales básicos para prácticas de laboratorio.",
-    price: "45.00",
-    available: 12,
-  },
-]
-
 const Kits = () => {
+  const { data: kits = [], isLoading, isError } = useKits()
+  const navigate = useNavigate()
+
   return (
     <Page>
       <List>
@@ -81,9 +34,15 @@ const Kits = () => {
         </Toolbar>
 
         <GridScroll>
+          {isLoading && <p>Cargando kits...</p>}
+          {isError && <p>Error al cargar los kits</p>}
           <Grid>
             {kits.map((kit) => (
-              <KitCard key={kit.code} kit={kit} />
+              <KitCard
+                key={kit.kitId}
+                kit={kit}
+                onDetail={() => navigate(`/kits/${kit.kitId}`)}
+              />
             ))}
           </Grid>
         </GridScroll>

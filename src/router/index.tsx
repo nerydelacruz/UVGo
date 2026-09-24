@@ -17,6 +17,10 @@ export const router = createBrowserRouter([
                 element:(<KitDetail/>)
             },
             {
+                path:'kits/:kitId',
+                element:(<KitDetail/>)
+            },
+            {
                 path:'dashboard',
 
             }

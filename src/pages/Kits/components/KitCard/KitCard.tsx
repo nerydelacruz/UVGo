@@ -1,9 +1,11 @@
 import { FiBarChart2, FiPackage, FiTag } from "react-icons/fi"
 import {
+  Actions,
   AddButton,
   Card,
   Code,
   Description,
+  DetailButton,
   ImageSlot,
   Name,
   StatBadge,
@@ -14,20 +16,13 @@ import {
   StatSub,
   StatValue,
 } from "./KitCard.styles"
+import type { Kit } from "@/models/kit.model"
 
-export interface Kit {
-  code: string
-  name: string
-  description: string
-  price: string
-  available: number
-}
-
-const KitCard = ({ kit, onAdd }: { kit: Kit; onAdd?: () => void }) => {
+const KitCard = ({ kit, onAdd, onDetail }: { kit: Kit; onAdd?: () => void; onDetail?: () => void }) => {
   return (
     <Card>
       <Name>
-        {kit.name} <Code>[{kit.code}]</Code>
+        {kit.name} <Code>[{kit.course}]</Code>
       </Name>
       <Description>{kit.description}</Description>
 
@@ -44,7 +39,7 @@ const KitCard = ({ kit, onAdd }: { kit: Kit; onAdd?: () => void }) => {
           <StatRow>
             <div>
               <StatSub>50% Anticu</StatSub>
-              <StatValue>Q{kit.price}</StatValue>
+              <StatValue>Q{kit.price.toFixed(2)}</StatValue>
             </div>
             <StatBadge tone="primary">
               <FiBarChart2 size={20} />
@@ -60,7 +55,7 @@ const KitCard = ({ kit, onAdd }: { kit: Kit; onAdd?: () => void }) => {
           <StatRow>
             <div>
               <StatSub>Erick Marroquin</StatSub>
-              <StatValue>{kit.available} piezas</StatValue>
+              <StatValue>{kit.course}</StatValue>
             </div>
             <StatBadge tone="warning">
               <FiBarChart2 size={20} />
@@ -69,7 +64,10 @@ const KitCard = ({ kit, onAdd }: { kit: Kit; onAdd?: () => void }) => {
         </StatBox>
       </Stats>
 
-      <AddButton onClick={onAdd}>Agregar</AddButton>
+      <Actions>
+        <DetailButton onClick={onDetail}>Ver detalle</DetailButton>
+        <AddButton onClick={onAdd}>Agregar</AddButton>
+      </Actions>
     </Card>
   )
 }

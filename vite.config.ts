@@ -14,4 +14,9 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/uvgo': 'http://localhost:8070',
+    },
+  },
 })

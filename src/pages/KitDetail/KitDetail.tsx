@@ -1,5 +1,7 @@
 import { lazy, Suspense } from "react"
-import { FiPackage, FiTruck } from "react-icons/fi"
+import { FiTag, FiTruck } from "react-icons/fi"
+import { useParams } from "react-router-dom"
+import { useKit } from "@/hooks/useKit"
 import AddonsPanel from "./components/AddonsPanel/AddonsPanel"
 import CartPanel from "./components/CartPanel/CartPanel"
 import CheckoutPanel from "./components/CheckoutPanel/CheckoutPanel"
@@ -21,30 +23,29 @@ import {
 
 const KitModelViewer = lazy(() => import("./components/KitModelViewer/KitModelViewer"))
 
-const kit = {
-  category: "Kit Académico",
-  nameLines: ["Kit de", "Laboratorio"],
-  stats: [
-    { id: "piezas", icon: <FiPackage size={20} />, value: "12 piezas" },
-    { id: "entrega", icon: <FiTruck size={20} />, value: "Entrega: 24h" },
-  ],
-}
-
 const KitDetail = () => {
+  const { kitId } = useParams()
+  const { data: kit, isLoading, isError } = useKit(Number(kitId))
+
+  if (isLoading) return <p>Cargando kit...</p>
+  if (isError) return <p>Error al cargar el kit</p>
+  if (!kit) return <p>Kit no encontrado</p>
+
+  const stats = [
+    { id: "precio", icon: <FiTag size={20} />, value: `Q${kit.price.toFixed(2)}` },
+    { id: "entrega", icon: <FiTruck size={20} />, value: "Entrega: 24h" },
+  ]
+
   return (
     <Page>
       <LeftColumn>
         <HeaderBlock>
-          <Eyebrow>{kit.category}</Eyebrow>
-          <Title>
-            {kit.nameLines.map((line) => (
-              <div key={line}>{line}</div>
-            ))}
-          </Title>
+          <Eyebrow>{kit.course}</Eyebrow>
+          <Title>{kit.name}</Title>
         </HeaderBlock>
 
         <StatsColumn>
-          {kit.stats.map((stat) => (
+          {stats.map((stat) => (
             <StatItem key={stat.id}>
               <StatIcon>{stat.icon}</StatIcon>
               <StatValue>{stat.value}</StatValue>
@@ -64,7 +65,7 @@ const KitDetail = () => {
       </CenterColumn>
 
       <RightColumn>
-        <CompleteKitList />
+        <CompleteKitList kit={kit} />
         <CheckoutPanel />
       </RightColumn>
     </Page>

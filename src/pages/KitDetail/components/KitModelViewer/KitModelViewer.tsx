@@ -7,6 +7,8 @@ import { Viewport } from "./KitModelViewer.styles"
 
 const KitModel = ({ margin, position }: { margin: number; position: [number, number, number] }) => {
   const { scene } = useGLTF(modelUrl)
+  // useGLTF cachea la escena entre visitas: se montan clones para no reutilizar el objeto original
+  const referenceModel = useMemo(() => scene.clone(true), [scene])
   const visibleModel = useMemo(() => scene.clone(true), [scene])
 
   return (
@@ -15,7 +17,7 @@ const KitModel = ({ margin, position }: { margin: number; position: [number, num
       {/* así el encuadre nunca depende de la posición elegida (por defecto o en vivo) */}
       <Bounds fit clip margin={margin}>
         <Center>
-          <primitive object={scene} visible={false} />
+          <primitive object={referenceModel} visible={false} />
         </Center>
       </Bounds>
 
