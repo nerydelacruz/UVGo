@@ -15,3 +15,16 @@ export const updateKit = async (kit: UpdateKitRequest): Promise<KitWithArticulos
   const { data } = await api.put<KitWithArticulos>('/kits', kit)
   return data
 }
+
+export const getKitsPersonalizados = async (): Promise<KitWithArticulos[]> => {
+  const { data } = await api.get<KitWithArticulos[]>('/kits/personalizados')
+  if (!Array.isArray(data)) {
+    throw new Error('La respuesta de GET /kits/personalizados no es un arreglo')
+  }
+  return data
+}
+
+export const getKitsPredeterminados = async (): Promise<Kit[]> => {
+  const { data } = await api.get<Kit[]>('/kits/base')
+  return data
+}

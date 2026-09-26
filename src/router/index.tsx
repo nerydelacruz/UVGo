@@ -1,4 +1,5 @@
 import Dashboard from "@/pages/Kits/Dashboard";
+import KitsCatalog from "@/pages/Kits/KitsCatalog";
 import KitDetail from "@/pages/KitDetail/KitDetail";
 import { Layout } from "@/layout";
 import { createBrowserRouter } from "react-router-dom";
@@ -18,7 +19,7 @@ export const router = createBrowserRouter([
             },
             {
                 path:'kits',
-                element:(<KitDetail/>)
+                element:(<KitsCatalog/>)
             },
             {
                 path:'kits/:kitId',

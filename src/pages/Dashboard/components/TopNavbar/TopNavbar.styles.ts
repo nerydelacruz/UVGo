@@ -41,16 +41,34 @@ export const Links = styled.nav`
   }
 `
 
-export const Link = styled(motion.a)`
+export const Link = styled(motion.a, {
+  shouldForwardProp: (prop) => prop !== "active",
+})<{ active?: boolean }>`
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  padding-bottom: 0.6rem;
   font-size: ${(p) => p.theme.font.size.md};
-  color: ${(p) => p.theme.color.textMuted};
+  font-weight: ${(p) => (p.active ? p.theme.font.weight.semibold : p.theme.font.weight.medium)};
+  color: ${(p) => (p.active ? p.theme.color.textStrong : p.theme.color.textMuted)};
   transition: color 150ms ease;
 
   &:hover {
     color: ${(p) => p.theme.color.textStrong};
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    border-radius: ${(p) => p.theme.radius.full};
+    background: ${(p) => p.theme.color.accent};
+    opacity: ${(p) => (p.active ? 1 : 0)};
+    transition: opacity 150ms ease;
   }
 `
 
