@@ -12,7 +12,8 @@ export interface Kit {
 // Respuesta de GET /kits/{kitId}: el kit con sus artículos
 export interface KitWithArticulos extends Kit {
   articulos: Articulo[]
-  estado: string
+  // código de estados_kit: 0 = BASE, 1 = PERSONALIZADO
+  estado: number
   kitBaseId: number | null
 }
 

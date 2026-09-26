@@ -11,8 +11,15 @@ export const getKitById = async (kitId: number): Promise<KitWithArticulos> => {
   return data
 }
 
-export const updateKit = async (kit: UpdateKitRequest): Promise<KitWithArticulos> => {
+// Crea un kit personalizado a partir de un kit base (kit.kitId = id del kit base)
+export const personalizarKit = async (kit: UpdateKitRequest): Promise<KitWithArticulos> => {
   const { data } = await api.put<KitWithArticulos>('/kits', kit)
+  return data
+}
+
+// Actualiza en el lugar un kit que ya existe (base o personalizado)
+export const editarKit = async (kitId: number, kit: UpdateKitRequest): Promise<KitWithArticulos> => {
+  const { data } = await api.put<KitWithArticulos>(`/kits/${kitId}`, kit)
   return data
 }
 
