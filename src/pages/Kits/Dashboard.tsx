@@ -20,6 +20,8 @@ const Dashboard = () => {
   const [search, setSearch] = useState("")
 
   const filteredKits = useMemo(() => {
+    if (!Array.isArray(kits)) return []
+
     const term = normalize(search.trim())
     if (!term) return kits
     return kits.filter((kit) =>
