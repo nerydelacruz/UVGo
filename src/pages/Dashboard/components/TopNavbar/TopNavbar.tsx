@@ -5,8 +5,8 @@ import logo from "../../../../assets/logo.png"
 import { ActionButton, Actions, Avatar, Brand, Dot, Link, Links, Nav } from "./TopNavbar.styles"
 
 const links = [
-  { label: "Services", dropdown: true },
-  { label: "Help", dropdown: false },
+  { label: "Dashboard", dropdown: true },
+  { label: "Kits", dropdown: false },
   { label: "Pricing", dropdown: true },
   { label: "Recyclers", dropdown: false },
   { label: "Track Order", dropdown: false },

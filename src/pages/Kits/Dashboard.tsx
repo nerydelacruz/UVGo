@@ -8,13 +8,13 @@ import OrderTrendsChart from "./components/OrderTrendsChart/OrderTrendsChart"
 import StaffAnnouncements from "./components/StaffAnnouncements/StaffAnnouncements"
 import StatsBar from "./components/StatsBar/StatsBar"
 import Pedidos from "../Pedidos/Pedidos"
-import { Count, Grid, GridScroll, List, Page, RightColumn, SearchBox, Toolbar, TrendsRow } from "./Kits.styles"
+import { Count, Grid, GridScroll, List, Page, RightColumn, SearchBox, Toolbar, TrendsRow } from "./Dashboard.styles"
 
 // minúsculas y sin tildes: "quimica" encuentra "Química"
 const normalize = (text: string) =>
   text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
 
-const Kits = () => {
+const Dashboard = () => {
   const { data: kits = [], isLoading, isError } = useKits()
   const navigate = useNavigate()
   const [search, setSearch] = useState("")
@@ -77,4 +77,4 @@ const Kits = () => {
   )
 }
 
-export default Kits
+export default Dashboard
