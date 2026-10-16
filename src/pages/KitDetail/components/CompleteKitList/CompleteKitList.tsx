@@ -1,9 +1,10 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { FiBox, FiInfo, FiPlus, FiX } from "react-icons/fi"
 import { useUpdateKit } from "@/hooks/useUpdateKit"
 import type { NuevoArticulo } from "@/models/articulo.model"
 import type { KitWithArticulos } from "@/models/kit.model"
 import AddArticuloModal from "../AddArticuloModal/AddArticuloModal"
+import ImportarMateriales from "../ImportarMateriales/ImportarMateriales"
 import {
   AddButton,
   AddProductRow,
@@ -22,6 +23,8 @@ import {
 
 const CompleteKitList = ({ kit }: { kit: KitWithArticulos }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [importando, setImportando] = useState(false)
+  const guardando = useRef(false)
   // productos agregados en esta sesión: se guardan todos juntos con un solo PUT
   const [nuevos, setNuevos] = useState<NuevoArticulo[]>([])
   const { mutate, isPending, isError } = useUpdateKit()
@@ -32,6 +35,8 @@ const CompleteKitList = ({ kit }: { kit: KitWithArticulos }) => {
   const removeNuevo = (index: number) => setNuevos((prev) => prev.filter((_, i) => i !== index))
 
   const handleSave = () => {
+    if (guardando.current || nuevos.length === 0) return
+    guardando.current = true
     const existentes: NuevoArticulo[] = articulos.map(
       ({ nombre, descripcion, cantidad, categoria, observacionesCotizacion }) => ({
         nombre,
@@ -51,7 +56,7 @@ const CompleteKitList = ({ kit }: { kit: KitWithArticulos }) => {
         price: kit.price,
         articulos: [...existentes, ...nuevos],
       },
-      { onSuccess: () => setNuevos([]) },
+      { onSuccess: () => setNuevos([]), onSettled: () => { guardando.current = false } },
     )
   }
 
@@ -82,19 +87,23 @@ const CompleteKitList = ({ kit }: { kit: KitWithArticulos }) => {
               {articulo.nombre} · x{articulo.cantidad}
             </Label>
             <NewBadge>Nuevo</NewBadge>
-            <RemoveButton type="button" onClick={() => removeNuevo(index)} aria-label="Quitar producto">
+            <RemoveButton type="button" disabled={isPending} onClick={() => removeNuevo(index)} aria-label="Quitar producto">
               <FiX size={16} />
             </RemoveButton>
           </Row>
         ))}
 
-        <AddProductRow type="button" onClick={() => setIsModalOpen(true)}>
+        <AddProductRow type="button" disabled={isPending} onClick={() => setIsModalOpen(true)}>
           <Thumb>
             <FiPlus size={18} />
           </Thumb>
           Agregar producto
         </AddProductRow>
       </List>
+
+      {kit.kitBaseId == null && <AddProductRow type="button" disabled={isPending} onClick={() => setImportando(true)}>
+        Importar materiales desde PDF
+      </AddProductRow>}
 
       {nuevos.length > 0 && (
         <>
@@ -118,6 +127,10 @@ const CompleteKitList = ({ kit }: { kit: KitWithArticulos }) => {
           onClose={() => setIsModalOpen(false)}
         />
       )}
+      {importando && <ImportarMateriales
+        onAdd={(articulos) => setNuevos(prev => [...prev, ...articulos])}
+        onClose={() => setImportando(false)}
+      />}
     </Card>
   )
 }

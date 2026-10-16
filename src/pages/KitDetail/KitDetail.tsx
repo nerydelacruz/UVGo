@@ -65,7 +65,7 @@ const KitDetail = () => {
       </CenterColumn>
 
       <RightColumn>
-        <CompleteKitList kit={kit} />
+        <CompleteKitList key={kit.kitId} kit={kit} />
         <CheckoutPanel />
       </RightColumn>
     </Page>
