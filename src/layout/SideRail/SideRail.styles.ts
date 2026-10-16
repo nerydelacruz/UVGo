@@ -1,19 +1,23 @@
 import styled from "@emotion/styled"
 import { Link } from "react-router-dom"
-import { Card } from "../../SeguimientoPedidos.styles"
 
-export const Rail = styled(Card.withComponent("nav"))`
+// Vidrio difuminado sobre el degradado verde-crema del Layout (mismo tratamiento que tenía el TopNavbar)
+export const Rail = styled.nav`
+  /* encima del contenido para que el menú de cuenta no quede tapado por las tarjetas */
+  position: relative;
+  z-index: 20;
   display: flex;
   align-items: center;
   flex-direction: column;
   gap: ${(p) => p.theme.space.xl};
+  min-height: 0;
   padding: ${(p) => p.theme.space.lg} 0;
-
-  @media (max-width: 1180px) {
-    position: sticky;
-    top: ${(p) => p.theme.space.lg};
-    height: calc(100vh - 3.2rem);
-  }
+  border-radius: ${(p) => p.theme.radius.xl};
+  background: ${(p) => p.theme.color.surfaceMuted};
+  box-shadow: ${(p) => p.theme.shadow.sm};
+  outline: 1px solid rgba(255, 255, 255, 0.6);
+  outline-offset: -1px;
+  backdrop-filter: blur(24px) saturate(1.5);
 
   @media (max-width: 640px) {
     display: none;
@@ -62,19 +66,4 @@ export const NavButton = styled.button<{ active: boolean }>`
     outline: 3px solid rgba(224, 122, 95, 0.35);
     outline-offset: 2px;
   }
-`
-
-export const Avatar = styled.span`
-  display: grid;
-  place-items: center;
-  width: 4.4rem;
-  height: 4.4rem;
-  margin-top: ${(p) => p.theme.space.sm};
-  border: 2px solid white;
-  border-radius: ${(p) => p.theme.radius.full};
-  background: ${(p) => p.theme.gradient.avatarWarm};
-  box-shadow: 0 0 0 1px rgba(82, 82, 82, 0.12);
-  font-size: ${(p) => p.theme.font.size.xs};
-  font-weight: ${(p) => p.theme.font.weight.semibold};
-  color: ${(p) => p.theme.color.text};
 `
