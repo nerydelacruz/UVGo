@@ -30,6 +30,8 @@ interface DeliveryMapProps {
   remainingLabel?: string
   arrivalLabel: string
   mapStyle: MapStyle
+  /** Vista inclinada con relieve y edificios en 3D */
+  is3d: boolean
   /** Espacio a la derecha que tapa el panel flotante, en px */
   rightInset: number
   onRoute?: (info: RouteInfo) => void
@@ -40,6 +42,9 @@ interface DeliveryMapProps {
 const token = import.meta.env.VITE_MAPBOX_TOKEN
 const ACCENT = "#e07a5f"
 const ANIMATION_MS = 2600
+const PITCH_3D = 60
+const DEM_SOURCE = "mapbox-dem"
+const BUILDINGS_LAYER = "buildings-3d"
 const styleUrl: Record<MapStyle, string> = {
   light: "mapbox://styles/mapbox/light-v11",
   streets: "mapbox://styles/mapbox/streets-v12",
@@ -93,6 +98,7 @@ const DeliveryMap = ({
   remainingLabel,
   arrivalLabel,
   mapStyle,
+  is3d,
   rightInset,
   onRoute,
   onUserMove,
@@ -104,6 +110,7 @@ const DeliveryMap = ({
   const traveledRef = useRef<LngLat[]>([origin])
   const motoRef = useRef<LngLat>(origin)
   const styleRef = useRef(mapStyle)
+  const is3dRef = useRef(is3d)
   const insetRef = useRef(rightInset)
   const callbacks = useRef({ onRoute, onUserMove })
   const [elements] = useState(() => ({
@@ -132,6 +139,7 @@ const DeliveryMap = ({
       padding: { top: 70, bottom: 60, left: 60, right: Math.min(right, clientWidth - 120) },
       duration,
       maxZoom: 16.5,
+      pitch: is3dRef.current ? PITCH_3D : 0,
     })
   }
 
@@ -139,7 +147,7 @@ const DeliveryMap = ({
     zoomIn: () => mapRef.current?.zoomIn(),
     zoomOut: () => mapRef.current?.zoomOut(),
     showRoute: () => fitRoute(),
-    showMoto: () => mapRef.current?.flyTo({ center: motoRef.current, zoom: 17, duration: 900 }),
+    showMoto: () => mapRef.current?.flyTo({ center: motoRef.current, zoom: 17, duration: 900, pitch: is3dRef.current ? PITCH_3D : 0 }),
     resize: () => mapRef.current?.resize(),
   }))
 
@@ -153,6 +161,7 @@ const DeliveryMap = ({
       style: styleUrl[styleRef.current],
       center: origin,
       zoom: 15,
+      pitch: is3dRef.current ? PITCH_3D : 0,
       attributionControl: false,
     })
     mapRef.current = map
@@ -168,9 +177,40 @@ const DeliveryMap = ({
     const moto = new mapboxgl.Marker({ element: elements.moto })
     const remaining = new mapboxgl.Marker({ element: elements.remaining, anchor: "bottom", offset: [0, -10] })
 
+    // Relieve (DEM) y edificios extruidos; se activan o apagan según is3dRef
+    const apply3d = (target: mapboxgl.Map) => {
+      if (!target.getSource(DEM_SOURCE)) {
+        target.addSource(DEM_SOURCE, { type: "raster-dem", url: "mapbox://mapbox.mapbox-terrain-dem-v1", tileSize: 512, maxzoom: 14 })
+      }
+      if (!target.getLayer(BUILDINGS_LAYER) && target.getSource("composite")) {
+        // Debajo de las etiquetas para que los nombres de calles sigan legibles
+        const labelId = target.getStyle()?.layers.find((l) => l.type === "symbol" && l.layout?.["text-field"])?.id
+        target.addLayer(
+          {
+            id: BUILDINGS_LAYER,
+            type: "fill-extrusion",
+            source: "composite",
+            "source-layer": "building",
+            filter: ["==", ["get", "extrude"], "true"],
+            minzoom: 14,
+            paint: {
+              "fill-extrusion-color": "#d9d4cb",
+              "fill-extrusion-height": ["get", "height"],
+              "fill-extrusion-base": ["get", "min_height"],
+              "fill-extrusion-opacity": 0.85,
+            },
+          },
+          labelId,
+        )
+      }
+      if (target.getLayer(BUILDINGS_LAYER)) target.setLayoutProperty(BUILDINGS_LAYER, "visibility", is3dRef.current ? "visible" : "none")
+      target.setTerrain(is3dRef.current ? { source: DEM_SOURCE, exaggeration: 1.2 } : null)
+    }
+
     // Las capas se vuelven a agregar cada vez que cambia el estilo del mapa
     const addRouteLayers = () => {
       if (map.getSource("route")) return
+      apply3d(map)
       map.addSource("route", { type: "geojson", data: lineFeature(lineRef.current) })
       map.addSource("traveled", { type: "geojson", data: lineFeature(traveledRef.current) })
       const layout = { "line-cap": "round", "line-join": "round" } as const
@@ -225,6 +265,17 @@ const DeliveryMap = ({
     const map = mapRef.current
     if (map && map.isStyleLoaded()) map.setStyle(styleUrl[mapStyle])
   }, [mapStyle])
+
+  // Alterna 2D/3D sin recrear el mapa
+  useEffect(() => {
+    is3dRef.current = is3d
+    const map = mapRef.current
+    if (!map || !map.isStyleLoaded()) return
+    const visible = is3d ? "visible" : "none"
+    if (map.getLayer(BUILDINGS_LAYER)) map.setLayoutProperty(BUILDINGS_LAYER, "visibility", visible)
+    map.setTerrain(is3d ? { source: DEM_SOURCE, exaggeration: 1.2 } : null)
+    map.easeTo({ pitch: is3d ? PITCH_3D : 0, duration: 800 })
+  }, [is3d])
 
   if (!token) {
     return <MapFallback>Configura VITE_MAPBOX_TOKEN en .env.local para ver el mapa.</MapFallback>

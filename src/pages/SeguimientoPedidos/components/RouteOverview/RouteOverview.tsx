@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { FiCrosshair, FiInfo, FiLayers, FiMap, FiMaximize2, FiMinimize2, FiMinus, FiPlus, FiX } from "react-icons/fi"
+import { FiBox, FiCrosshair, FiInfo, FiLayers, FiMap, FiMaximize2, FiMinimize2, FiMinus, FiPlus, FiX } from "react-icons/fi"
 import { MdDeliveryDining } from "react-icons/md"
 import { routeProgress, statusLabel, warehouse, type Order } from "../../data"
 import { CardTitle, Muted, SquareButton } from "../../SeguimientoPedidos.styles"
@@ -28,6 +28,7 @@ type View = "route" | "moto" | "free"
 const RouteOverview = ({ order }: { order: Order }) => {
   const mapRef = useRef<DeliveryMapHandle>(null)
   const [mapStyle, setMapStyle] = useState<MapStyle>("streets")
+  const [is3d, setIs3d] = useState(false)
   // la vista vuelve a "ruta completa" al cambiar de pedido
   const [viewState, setViewState] = useState<{ id: string; view: View }>({ id: order.id, view: "route" })
   const [expanded, setExpanded] = useState(false)
@@ -85,6 +86,16 @@ const RouteOverview = ({ order }: { order: Order }) => {
           >
             <FiLayers size={17} />
           </SquareButton>
+          <SquareButton
+            type="button"
+            active={is3d}
+            aria-pressed={is3d}
+            title={is3d ? "Vista 3D activada" : "Vista 3D"}
+            aria-label="Alternar vista 3D"
+            onClick={() => setIs3d((value) => !value)}
+          >
+            <FiBox size={17} />
+          </SquareButton>
           <SquareButton type="button" active={view === "route"} title="Ver ruta completa" aria-label="Ver ruta completa" onClick={() => goTo("route")}>
             <FiMap size={17} />
           </SquareButton>
@@ -120,6 +131,7 @@ const RouteOverview = ({ order }: { order: Order }) => {
           remainingLabel={isLive ? `${order.etaMin} min restantes` : undefined}
           arrivalLabel={arrivalLabel}
           mapStyle={mapStyle}
+          is3d={is3d}
           rightInset={panelOpen ? PANEL_WIDTH : 0}
           onRoute={(next) => setRouteInfo({ id: order.id, info: next })}
           onUserMove={() => setView("free")}
