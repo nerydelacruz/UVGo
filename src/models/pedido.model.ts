@@ -82,6 +82,7 @@ export interface PedidoDetalle {
 export const CANTIDAD_MIN = 1
 export const CANTIDAD_MAX = 999
 export const PRODUCTOS_MAX = 100
+export const OBSERVACIONES_MAX = 2000
 
 export interface Pagina<T> {
   contenido: T[]

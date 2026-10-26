@@ -5,7 +5,13 @@ import { FiAlertCircle, FiCheck, FiImage, FiMinus, FiPlus, FiX } from "react-ico
 import Dialog from "@/components/Dialog/Dialog"
 import { Actions, DialogText, DialogTitle, FormBody, FormField } from "@/components/Dialog/Dialog.styles"
 import { useCrearSolicitud } from "@/hooks/usePedidos"
-import { CANTIDAD_MAX, CANTIDAD_MIN, PRODUCTOS_MAX, type ProductoSolicitud } from "@/models/pedido.model"
+import {
+  CANTIDAD_MAX,
+  CANTIDAD_MIN,
+  OBSERVACIONES_MAX,
+  PRODUCTOS_MAX,
+  type ProductoSolicitud,
+} from "@/models/pedido.model"
 import { ErrorText, GhostButton, PrimaryButton } from "@/styles/shared.styles"
 import { getErrorMessage } from "@/utilities/apiError"
 import { hoyISO } from "@/utilities/date"
@@ -27,6 +33,8 @@ import {
 interface CrearSolicitudDialogProps {
   open: boolean
   items: ItemSeleccionado[]
+  // Texto inicial de observaciones (p. ej. la lista de materiales importada desde un PDF)
+  observacionesIniciales?: string
   onCantidad: (key: string, cantidad: number) => void
   onQuitar: (key: string) => void
   onCreada: () => void
@@ -62,14 +70,21 @@ const mensajeError = (error: unknown) =>
     ? "Solo las cuentas de estudiante pueden solicitar cotizaciones."
     : getErrorMessage(error, "No pudimos enviar tu solicitud. Intenta de nuevo.")
 
-const Formulario = ({ items, onCantidad, onQuitar, onCreada, onClose }: Omit<CrearSolicitudDialogProps, "open">) => {
+const Formulario = ({
+  items,
+  observacionesIniciales = "",
+  onCantidad,
+  onQuitar,
+  onCreada,
+  onClose,
+}: Omit<CrearSolicitudDialogProps, "open">) => {
   const crear = useCrearSolicitud()
   const navigate = useNavigate()
   const [curso, setCurso] = useState("")
   const [catedratico, setCatedratico] = useState("")
   const [fechaLimite, setFechaLimite] = useState("")
   const [puntoEntrega, setPuntoEntrega] = useState("")
-  const [observaciones, setObservaciones] = useState("")
+  const [observaciones, setObservaciones] = useState(observacionesIniciales)
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -112,6 +127,8 @@ const Formulario = ({ items, onCantidad, onQuitar, onCreada, onClose }: Omit<Cre
   }
 
   const demasiados = items.length > PRODUCTOS_MAX
+  // maxLength no recorta un valor inicial largo (la lista del PDF), así que se valida aparte
+  const observacionesLargas = observaciones.trim().length > OBSERVACIONES_MAX
 
   return (
     <FormBody onSubmit={handleSubmit}>
@@ -227,10 +244,17 @@ const Formulario = ({ items, onCantidad, onQuitar, onCreada, onClose }: Omit<Cre
         <textarea
           value={observaciones}
           onChange={(e) => setObservaciones(e.target.value)}
-          maxLength={2000}
+          maxLength={OBSERVACIONES_MAX}
           placeholder="Marca, modelo o cualquier detalle que nos ayude a conseguirlo"
         />
       </FormField>
+      {observacionesLargas && (
+        <ErrorText role="alert">
+          <FiAlertCircle size={14} aria-hidden />
+          Las observaciones admiten hasta {OBSERVACIONES_MAX} caracteres ({observaciones.trim().length} ahora). Resume la
+          lista de materiales.
+        </ErrorText>
+      )}
 
       {crear.isError && (
         <ErrorText role="alert">
@@ -243,7 +267,7 @@ const Formulario = ({ items, onCantidad, onQuitar, onCreada, onClose }: Omit<Cre
         <GhostButton type="button" onClick={onClose} disabled={crear.isPending}>
           Cancelar
         </GhostButton>
-        <PrimaryButton type="submit" disabled={crear.isPending || items.length === 0 || demasiados}>
+        <PrimaryButton type="submit" disabled={crear.isPending || items.length === 0 || demasiados || observacionesLargas}>
           {crear.isPending ? "Enviando…" : "Enviar solicitud"}
         </PrimaryButton>
       </Actions>
