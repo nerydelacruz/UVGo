@@ -30,12 +30,12 @@ import {
   SectionLabel,
 } from "./OrdersPanel.styles"
 
-type FilterId = "semestre" | "en-ruta" | "por-confirmar"
+type FilterId = "semestre" | "en-ruta" | "pago-pendiente"
 
 const filterOptions: Array<{ id: FilterId; label: string; test: (order: Order) => boolean }> = [
   { id: "semestre", label: "Este semestre", test: (order) => order.thisSemester },
   { id: "en-ruta", label: "En ruta", test: (order) => order.status === "en-ruta" },
-  { id: "por-confirmar", label: "Por confirmar", test: (order) => order.status === "cotizado" },
+  { id: "pago-pendiente", label: "Pago pendiente", test: (order) => order.paymentStatus === "pendiente" },
 ]
 
 const statusTone = (order: Order) => (order.status === "entregado" ? "success" : order.status === "en-ruta" ? "accent" : "neutral")
@@ -44,10 +44,11 @@ interface OrdersPanelProps {
   orders: Order[]
   selectedId: string
   onSelect: (id: string) => void
-  onConfirm: (id: string) => void
+  // Pedido confirmado sin pago validado: lleva a "Mis solicitudes" para subir el comprobante
+  onPagar: (id: string) => void
 }
 
-const OrdersPanel = ({ orders, selectedId, onSelect, onConfirm }: OrdersPanelProps) => {
+const OrdersPanel = ({ orders, selectedId, onSelect, onPagar }: OrdersPanelProps) => {
   const [query, setQuery] = useState("")
   const [activeFilters, setActiveFilters] = useState<FilterId[]>(["semestre"])
 
@@ -78,7 +79,8 @@ const OrdersPanel = ({ orders, selectedId, onSelect, onConfirm }: OrdersPanelPro
     },
   })
 
-  const handleAction = (order: Order) => (order.status === "cotizado" ? onConfirm(order.id) : onSelect(order.id))
+  const handleAction = (order: Order) =>
+    orderAction(order) === "Pagar" && !order.tieneComprobante ? onPagar(order.id) : onSelect(order.id)
 
   return (
     <Panel aria-label="Tus pedidos">
@@ -94,7 +96,7 @@ const OrdersPanel = ({ orders, selectedId, onSelect, onConfirm }: OrdersPanelPro
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Buscar kit, pedido o edificio"
+          placeholder="Buscar curso, pedido o edificio"
           aria-label="Buscar pedidos"
         />
       </SearchField>
@@ -146,7 +148,7 @@ const OrdersPanel = ({ orders, selectedId, onSelect, onConfirm }: OrdersPanelPro
             <Metrics>
               <div><span>Distancia</span><strong>{order.distanceKm.toFixed(1)} km</strong></div>
               <div><span>Tiempo est.</span><strong>{order.etaMin} min</strong></div>
-              <div><span>Envío</span><strong>{formatQ(order.shipping)}</strong></div>
+              <div><span>Servicio</span><strong>{formatQ(order.shipping)}</strong></div>
             </Metrics>
 
             <OrderFooter>
@@ -158,7 +160,7 @@ const OrdersPanel = ({ orders, selectedId, onSelect, onConfirm }: OrdersPanelPro
                   handleAction(order)
                 }}
               >
-                {orderAction(order.status)}
+                {orderAction(order) === "Pagar" && order.tieneComprobante ? "Ver pedido" : orderAction(order)}
               </ActionButton>
             </OrderFooter>
           </OrderCard>
@@ -186,7 +188,9 @@ const OrdersPanel = ({ orders, selectedId, onSelect, onConfirm }: OrdersPanelPro
           </CompactCard>
         ))}
 
-        {visible.length === 0 && <EmptyState>No hay pedidos con esos filtros.</EmptyState>}
+        {visible.length === 0 && (
+          <EmptyState>{orders.length === 0 ? "Aún no tienes pedidos confirmados." : "No hay pedidos con esos filtros."}</EmptyState>
+        )}
       </ScrollArea>
     </Panel>
   )

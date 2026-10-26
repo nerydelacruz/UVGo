@@ -8,12 +8,7 @@ export const Panel = styled(Card)`
   padding: ${(p) => p.theme.space.xl} ${(p) => p.theme.space.lg} 0;
 
   @media (max-width: 1180px) {
-    grid-column: 2;
     max-height: none;
-  }
-
-  @media (max-width: 640px) {
-    grid-column: 1;
   }
 `
 

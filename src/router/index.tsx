@@ -1,14 +1,19 @@
-import Dashboard from "@/pages/Kits/Dashboard";
-import KitsCatalog from "@/pages/Kits/KitsCatalog";
-import KitDetail from "@/pages/KitDetail/KitDetail";
+import Dashboard from "@/pages/Inicio/Dashboard";
 import SeguimientoPedidos from "@/pages/SeguimientoPedidos/SeguimientoPedidos";
+import CotizarCategoria from "@/pages/CotizarCategoria/CotizarCategoria";
+import MisSolicitudes from "@/pages/MisSolicitudes/MisSolicitudes";
+import AdminHome from "@/pages/Admin/AdminHome";
+import Solicitudes from "@/pages/Admin/Solicitudes/Solicitudes";
+import Login from "@/pages/Login/Login";
 import { Layout } from "@/layout";
-import { createBrowserRouter } from "react-router-dom";
+import RequireAuth from "@/layout/RequireAuth";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 
 export const router = createBrowserRouter([
     {
+        // Todo lo que está dentro del Layout requiere sesión
         path: '/',
-        element:(<Layout/>),
+        element:(<RequireAuth><Layout/></RequireAuth>),
         children:[
             {
                 index: true,
@@ -19,20 +24,37 @@ export const router = createBrowserRouter([
                 element:(<Dashboard/>)
             },
             {
-                path:'kits',
-                element:(<KitsCatalog/>)
+                path:'seguimiento-pedidos',
+                element:(<SeguimientoPedidos/>)
             },
             {
-                path:'kits/:kitId',
-                element:(<KitDetail/>)
+                path:'cotizar/:categoria',
+                element:(<CotizarCategoria/>)
+            },
+            {
+                path:'mis-solicitudes',
+                element:(<MisSolicitudes/>)
+            },
+            {
+                // Vista admin: solo para administradores
+                path:'admin',
+                element:(<RequireAuth rol="ADMINISTRADOR"><AdminHome/></RequireAuth>)
+            },
+            {
+                path:'admin/solicitudes',
+                element:(<RequireAuth rol="ADMINISTRADOR"><Solicitudes/></RequireAuth>)
             }
         ]
 
     },
     {
-        // Vista de pantalla completa con su propio sidebar, fuera del Layout con TopNavbar
-        path:'/seguimiento-pedidos',
-        element:(<SeguimientoPedidos/>)
+        path:'/login',
+        element:(<Login/>)
+    },
+    {
+        // Rutas que ya no existen (p. ej. /kits) o mal escritas vuelven al inicio
+        path:'*',
+        element:(<Navigate to="/" replace/>)
     },
 
 ])

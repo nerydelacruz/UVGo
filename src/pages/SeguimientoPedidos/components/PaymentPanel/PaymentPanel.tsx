@@ -1,5 +1,7 @@
+import { useState } from "react"
 import { FiCalendar, FiDownload, FiFileText } from "react-icons/fi"
-import { customer, formatQ, paymentLabel, type Order } from "../../data"
+import { obtenerComprobante } from "@/services/pedido.service"
+import { formatQ, paymentLabel, type Order } from "../../data"
 import { StatusBadge, type BadgeTone } from "../../SeguimientoPedidos.styles"
 import {
   DateGrid,
@@ -22,7 +24,26 @@ const badgeTone: Record<Order["paymentStatus"], BadgeTone> = {
 
 const PaymentPanel = ({ order }: { order: Order }) => {
   const balance = order.total - order.paid
-  const paidPercent = Math.round((order.paid / order.total) * 100)
+  const paidPercent = order.total > 0 ? Math.round((order.paid / order.total) * 100) : 0
+  const [descargando, setDescargando] = useState(false)
+
+  // Descarga el comprobante de pago que subió el estudiante (se pide con el token, como Blob)
+  const descargar = async () => {
+    setDescargando(true)
+    try {
+      const blob = await obtenerComprobante(order.id)
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement("a")
+      enlace.href = url
+      enlace.download = `comprobante-${order.number}`
+      enlace.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch {
+      // Sin comprobante o sin conexión: el botón se vuelve a habilitar para reintentar
+    } finally {
+      setDescargando(false)
+    }
+  }
 
   return (
     <Stack>
@@ -32,15 +53,21 @@ const PaymentPanel = ({ order }: { order: Order }) => {
             <span>Comprobante</span>
             <strong>#{order.number}</strong>
           </div>
-          <button type="button" aria-label="Descargar comprobante" title="Descargar comprobante">
+          <button
+            type="button"
+            aria-label="Descargar comprobante de pago"
+            title={order.tieneComprobante ? "Descargar comprobante de pago" : "Aún no hay comprobante de pago"}
+            disabled={!order.tieneComprobante || descargando}
+            onClick={descargar}
+          >
             <FiDownload size={16} />
           </button>
         </InvoiceHead>
         <InvoiceBody>
           <InvoiceRows>
-            <dt>Kit</dt><dd>{order.kitName}</dd>
-            <dt>Cliente</dt><dd>{customer.name} · {customer.carnet}</dd>
-            <dt>Dirección</dt><dd>{order.destination}, Campus Central UVG</dd>
+            <dt>Pedido</dt><dd>{order.kitName}</dd>
+            <dt>Cliente</dt><dd>{order.cliente}</dd>
+            <dt>Entrega</dt><dd>{order.destination}, Campus Central UVG</dd>
             <dt>Monto</dt><dd>{formatQ(order.total)}</dd>
           </InvoiceRows>
         </InvoiceBody>
@@ -58,7 +85,13 @@ const PaymentPanel = ({ order }: { order: Order }) => {
         <Total>
           <span>Monto total</span>
           <strong>{formatQ(order.total)}</strong>
-          <small>{balance > 0 ? `Saldo ${formatQ(balance)} · ${paidPercent}% pagado` : "Pagado en su totalidad"}</small>
+          <small>
+            {balance <= 0
+              ? "Pagado en su totalidad"
+              : order.tieneComprobante
+                ? "Comprobante enviado · en revisión"
+                : `Saldo ${formatQ(balance)} · falta subir el comprobante`}
+          </small>
         </Total>
 
         <Progress aria-label={`${paidPercent} por ciento pagado`}>
@@ -66,8 +99,8 @@ const PaymentPanel = ({ order }: { order: Order }) => {
         </Progress>
 
         <DateGrid>
-          <div><span><FiCalendar size={12} /> Emisión</span><strong>{order.issuedAt}</strong></div>
-          <div><span><FiCalendar size={12} /> Vence saldo</span><strong>{order.dueAt}</strong></div>
+          <div><span><FiCalendar size={12} /> Cotizado</span><strong>{order.issuedAt}</strong></div>
+          <div><span><FiCalendar size={12} /> Fecha límite</span><strong>{order.dueAt}</strong></div>
         </DateGrid>
       </PaymentCard>
     </Stack>

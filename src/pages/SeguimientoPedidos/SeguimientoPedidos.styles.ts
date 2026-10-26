@@ -10,26 +10,19 @@ export const tracking = {
   accentInk: "#a34f3a",
 } as const
 
+// El sidebar, el padding y el fondo degradado los pone el Layout
 export const Shell = styled.div`
   display: grid;
-  grid-template-columns: 7.2rem minmax(30rem, 34rem) minmax(0, 1fr);
-  height: 100vh;
+  grid-template-columns: minmax(30rem, 34rem) minmax(0, 1fr);
+  flex: 1;
+  height: 100%;
+  min-width: 0;
   gap: ${(p) => p.theme.space.lg};
-  padding: ${(p) => p.theme.space.lg};
-  overflow: hidden;
-  background: ${tracking.pageBg};
   color: ${(p) => p.theme.color.text};
 
   @media (max-width: 1180px) {
-    grid-template-columns: 7.2rem minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     height: auto;
-    min-height: 100vh;
-    overflow: visible;
-  }
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-    padding: ${(p) => p.theme.space.md};
   }
 `
 
@@ -41,12 +34,10 @@ export const Main = styled.main`
   gap: ${(p) => p.theme.space.lg};
 
   @media (max-width: 1180px) {
-    grid-column: 2;
     grid-template-rows: 52rem auto;
   }
 
   @media (max-width: 640px) {
-    grid-column: 1;
     grid-template-rows: 44rem auto;
   }
 `
@@ -143,5 +134,31 @@ export const StatusBadge = styled.span<{ tone: BadgeTone; dot?: boolean }>`
     height: 0.6rem;
     border-radius: ${(p) => p.theme.radius.full};
     background: currentColor;
+  }
+`
+
+// Sin pedidos (o cargando / con error): ocupa todo el espacio de la derecha
+export const EmptyCard = styled(Card)`
+  display: grid;
+  grid-row: 1 / -1;
+  place-items: center;
+  padding: 4rem;
+  text-align: center;
+
+  strong {
+    display: block;
+    margin-bottom: ${(p) => p.theme.space.sm};
+    font-size: ${(p) => p.theme.font.size.lg};
+    font-weight: ${(p) => p.theme.font.weight.semibold};
+    color: ${(p) => p.theme.color.textStrong};
+  }
+
+  button {
+    border: 0;
+    background: none;
+    font: inherit;
+    color: ${(p) => p.theme.color.textStrong};
+    text-decoration: underline;
+    cursor: pointer;
   }
 `

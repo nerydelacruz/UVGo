@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
-import { FiCloudDrizzle, FiCrosshair, FiInfo, FiLayers, FiMap, FiMaximize2, FiMinimize2, FiMinus, FiPlus, FiTool, FiX } from "react-icons/fi"
-import { MdDeliveryDining, MdOutlineTraffic } from "react-icons/md"
-import { courier, routeAlerts, routeProgress, statusLabel, warehouse, type AlertTone, type Order } from "../../data"
+import { FiCrosshair, FiInfo, FiLayers, FiMap, FiMaximize2, FiMinimize2, FiMinus, FiPlus, FiX } from "react-icons/fi"
+import { MdDeliveryDining } from "react-icons/md"
+import { routeProgress, statusLabel, warehouse, type Order } from "../../data"
 import { CardTitle, Muted, SquareButton } from "../../SeguimientoPedidos.styles"
 import DeliveryMap, { type DeliveryMapHandle, type MapStyle, type RouteInfo } from "./DeliveryMap"
 import {
@@ -22,8 +22,6 @@ import {
 } from "./RouteOverview.styles"
 
 const PANEL_WIDTH = 300
-
-const alertIcon = { rain: FiCloudDrizzle, traffic: MdOutlineTraffic, works: FiTool }
 
 type View = "route" | "moto" | "free"
 
@@ -152,25 +150,13 @@ const RouteOverview = ({ order }: { order: Order }) => {
               <dt>Destino</dt><dd>{order.destination}</dd>
               <dt>Distancia total</dt><dd>{distanceKm.toFixed(1)} km</dd>
               <dt>Tiempo estimado</dt><dd>{isLive ? `${order.etaMin} min` : order.status === "entregado" ? "Completado" : `~${Math.max(order.etaMin, Math.round(info?.durationMin ?? 0))} min`}</dd>
-              <dt>Repartidor</dt><dd>{isLive || order.status === "entregado" ? courier.name : "Por asignar"}</dd>
+              <dt>Repartidor</dt><dd>{order.status === "entregado" ? "Equipo UVGo" : "Por asignar"}</dd>
             </DetailList>
 
-            {isLive ? (
-              <AlertRow>
-                {routeAlerts.map((alert) => {
-                  const Icon = alertIcon[alert.icon]
-                  return (
-                    <AlertChip key={alert.label} tone={alert.tone as AlertTone}>
-                      <Icon size={13} /> {alert.label}
-                    </AlertChip>
-                  )
-                })}
-              </AlertRow>
-            ) : (
-              <AlertRow>
-                <AlertChip tone="neutral"><FiInfo size={13} /> Sin alertas activas</AlertChip>
-              </AlertRow>
-            )}
+            {/* El backend todavía no registra la ruta: no se muestran alertas de tráfico ni clima */}
+            <AlertRow>
+              <AlertChip tone="neutral"><FiInfo size={13} /> Sin alertas activas</AlertChip>
+            </AlertRow>
           </DetailPanel>
         ) : (
           <ReopenButton type="button" onClick={() => setPanelOpen(true)}>
