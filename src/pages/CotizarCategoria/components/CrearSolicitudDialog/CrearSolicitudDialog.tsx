@@ -1,7 +1,7 @@
 import axios from "axios"
 import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
-import { FiAlertCircle, FiCheck, FiImage, FiMinus, FiPlus, FiX } from "react-icons/fi"
+import { FiAlertCircle, FiCheck, FiFileText, FiImage, FiMinus, FiPlus, FiX } from "react-icons/fi"
 import Dialog from "@/components/Dialog/Dialog"
 import { Actions, DialogText, DialogTitle, FormBody, FormField } from "@/components/Dialog/Dialog.styles"
 import { useCrearSolicitud } from "@/hooks/usePedidos"
@@ -33,8 +33,6 @@ import {
 interface CrearSolicitudDialogProps {
   open: boolean
   items: ItemSeleccionado[]
-  // Texto inicial de observaciones (p. ej. la lista de materiales importada desde un PDF)
-  observacionesIniciales?: string
   onCantidad: (key: string, cantidad: number) => void
   onQuitar: (key: string) => void
   onCreada: () => void
@@ -52,6 +50,13 @@ const aProductos = (items: ItemSeleccionado[]): ProductoSolicitud[] =>
   items.map((item) =>
     item.origen === "catalogo"
       ? { articuloId: item.producto.id, cantidad: item.cantidad }
+      : item.origen === "texto"
+      ? {
+          texto: item.texto,
+          ...(item.codigo ? { codigo: item.codigo.slice(0, 100) } : {}),
+          ...(item.termino ? { termino: item.termino.slice(0, 200) } : {}),
+          cantidad: item.cantidad,
+        }
       : {
           cantidad: item.cantidad,
           web: {
@@ -72,7 +77,6 @@ const mensajeError = (error: unknown) =>
 
 const Formulario = ({
   items,
-  observacionesIniciales = "",
   onCantidad,
   onQuitar,
   onCreada,
@@ -84,7 +88,7 @@ const Formulario = ({
   const [catedratico, setCatedratico] = useState("")
   const [fechaLimite, setFechaLimite] = useState("")
   const [puntoEntrega, setPuntoEntrega] = useState("")
-  const [observaciones, setObservaciones] = useState(observacionesIniciales)
+  const [observaciones, setObservaciones] = useState("")
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -146,13 +150,18 @@ const Formulario = ({
         ) : (
           <ItemList>
             {items.map((item) => {
-              const nombre = item.origen === "catalogo" ? item.producto.nombre : item.producto.titulo
-              const origen = item.origen === "catalogo" ? "Stock UVGo" : (item.producto.tienda ?? "Web")
+              const nombre =
+                item.origen === "catalogo" ? item.producto.nombre : item.origen === "web" ? item.producto.titulo : item.texto
+              const origen =
+                item.origen === "catalogo" ? "Stock UVGo" : item.origen === "web" ? (item.producto.tienda ?? "Web") : "Material del PDF"
+              const imagen = item.origen === "texto" ? null : item.producto.imagen
               return (
                 <Item key={item.key}>
                   <ItemThumb>
-                    {item.producto.imagen ? (
-                      <img src={item.producto.imagen} alt="" loading="lazy" />
+                    {imagen ? (
+                      <img src={imagen} alt="" loading="lazy" />
+                    ) : item.origen === "texto" ? (
+                      <FiFileText size={16} aria-hidden />
                     ) : (
                       <FiImage size={16} aria-hidden />
                     )}

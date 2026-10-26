@@ -38,7 +38,7 @@ const Formulario = ({ onAdd, onClose }: Omit<ImportarMaterialesProps, "open">) =
     setError("")
     try {
       const productos = await extraerProductos(archivo)
-      setFilas(productos.map((p) => ({ id: siguiente.current++, nombre: p.nombre, cantidad: limitar(p.cantidad) })))
+      setFilas(productos.map((p) => ({ ...p, id: siguiente.current++, cantidad: limitar(p.cantidad) })))
     } catch (e) {
       setError(getErrorMessage(e, "No se pudo analizar el PDF. Intenta de nuevo."))
     } finally {
@@ -54,7 +54,7 @@ const Formulario = ({ onAdd, onClose }: Omit<ImportarMaterialesProps, "open">) =
   const confirmar = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!filas || !validas) return
-    onAdd(filas.map(({ nombre, cantidad }) => ({ nombre: nombre.trim(), cantidad })))
+    onAdd(filas.map(({ nombre, cantidad, codigo, termino }) => ({ nombre: nombre.trim(), cantidad, codigo, termino })))
     onClose()
   }
 
@@ -68,7 +68,7 @@ const Formulario = ({ onAdd, onClose }: Omit<ImportarMaterialesProps, "open">) =
       {!filas && (
         <>
           <FormField>
-            PDF con texto seleccionable (máximo 5 MB)
+            PDF de hasta 5 MB (sirve también si es un escaneo)
             <input
               type="file"
               accept=".pdf,application/pdf"
@@ -109,7 +109,7 @@ const Formulario = ({ onAdd, onClose }: Omit<ImportarMaterialesProps, "open">) =
                     required
                     maxLength={120}
                     value={fila.nombre}
-                    onChange={(e) => editar(fila.id, { nombre: e.target.value })}
+                    onChange={(e) => editar(fila.id, { nombre: e.target.value, termino: undefined })}
                   />
                 </FormField>
                 <FormField>

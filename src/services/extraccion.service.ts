@@ -4,6 +4,9 @@ import { api } from './api'
 export interface ProductoExtraido {
   nombre: string
   cantidad: number
+  // Claude los sugiere para encontrar el producto en el stock; pueden venir vacíos
+  codigo?: string
+  termino?: string
 }
 
 // El backend saca el texto del PDF y se lo pasa a Claude; puede tardar, por eso el timeout largo

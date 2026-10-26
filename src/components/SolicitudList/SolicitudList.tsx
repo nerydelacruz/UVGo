@@ -68,7 +68,8 @@ const SolicitudList = ({ titulo, vacio, solicitudes, total, selectedId, isLoadin
 
       {solicitudes.map((solicitud) => {
         const web = solicitud.productos.filter((p) => p.tipo === "WEB").length
-        const catalogo = solicitud.productos.length - web
+        const catalogo = solicitud.productos.filter((p) => p.tipo === "CATALOGO").length
+        const pdf = solicitud.productos.filter((p) => p.tipo === "TEXTO").length
         const selected = solicitud.id === selectedId
         return (
           <Item
@@ -93,7 +94,9 @@ const SolicitudList = ({ titulo, vacio, solicitudes, total, selectedId, isLoadin
                 ) : (
                   <Badge tone="neutral">Esperando comprobante</Badge>
                 ))}
+              {solicitud.verificandoStock && <Badge tone="accent">Verificando en stock…</Badge>}
               {catalogo > 0 && <Badge tone="neutral">{catalogo} del catálogo</Badge>}
+              {pdf > 0 && <Badge tone="neutral">{pdf} del PDF</Badge>}
               {web > 0 && <Badge tone="neutral">{web} de la web</Badge>}
             </Badges>
           </Item>

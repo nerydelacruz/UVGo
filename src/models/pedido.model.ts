@@ -20,8 +20,11 @@ export interface ProductoWeb {
   moneda: string | null
 }
 
-// Cada producto viene del catálogo (articuloId) o de la web (web), nunca de ambos
-export type ProductoSolicitud = { articuloId: number; cantidad: number } | { web: ProductoWeb; cantidad: number }
+// Cada producto viene del catálogo (articuloId), de la web (web) o es un texto libre (material de un PDF); solo uno
+export type ProductoSolicitud =
+  | { articuloId: number; cantidad: number }
+  | { web: ProductoWeb; cantidad: number }
+  | { texto: string; codigo?: string; termino?: string; cantidad: number }
 
 export interface SolicitudRequest {
   curso: string
@@ -34,7 +37,7 @@ export interface SolicitudRequest {
 
 export interface ItemPedido {
   id: string
-  tipo: "CATALOGO" | "WEB"
+  tipo: "CATALOGO" | "WEB" | "TEXTO"
   articuloId: number | null
   descripcion: string
   cantidad: number
@@ -45,6 +48,11 @@ export interface ItemPedido {
   monedaReferencia: string | null
   precioUnitario: number | null
   subtotal: number | null
+  // Posible artículo del stock para un material del PDF; el sistema no estuvo seguro y lo deja al administrador
+  sugerenciaArticuloId: number | null
+  sugerenciaDescripcion: string | null
+  sugerenciaPrecio: number | null
+  sugerenciaMoneda: string | null
 }
 
 // Comprobante de pago guardado en Azure Blob Storage (el archivo se pide aparte: GET /{id}/comprobante)
@@ -76,6 +84,8 @@ export interface PedidoDetalle {
   fechaConfirmacion: string | null
   comprobante: Comprobante | null
   fechaPago: string | null
+  // El sistema aún compara los materiales del PDF con el stock; los ítems pueden cambiar en unos segundos
+  verificandoStock: boolean
 }
 
 // Límites del backend
