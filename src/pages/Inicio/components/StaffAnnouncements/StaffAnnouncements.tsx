@@ -4,50 +4,89 @@ import { Swiper, SwiperSlide } from "swiper/react"
 import "swiper/css"
 import "swiper/css/pagination"
 import "swiper/css/navigation"
-import { Board, Card, Content, EmptyText, Header, IconBadge, Message, StatusDot, Timestamp, Title } from "./StaffAnnouncements.styles"
+import type { PedidoDetalle } from "@/models/pedido.model"
+import { etapa, hace, ultimaActividad } from "../../resumen"
+import { Board, BoardLink, Card, Content, EmptyText, Header, IconBadge, Kind, Message, StatusDot, Timestamp, Title } from "./StaffAnnouncements.styles"
 
 interface Announcement {
   id: string
+  kind: "pedido" | "staff"
   message: string
   timestamp: string
+  to?: string
+  urgent?: boolean
 }
 
-const announcements: Announcement[] = [
-  { id: "a1", message: "Hoy no hay entregas después de las 5:00 PM", timestamp: "Hace 10 min" },
-  { id: "a2", message: "Kit de Física reabastecido ✅", timestamp: "Hace 32 min" },
-  { id: "a3", message: "Bodega cerrada por inventario el viernes", timestamp: "Hace 1 h" },
+// Avisos generales del equipo UVGo. El backend todavía no los guarda: se editan aquí.
+const avisosStaff: Announcement[] = [
+  { id: "s1", kind: "staff", message: "Entregas de lunes a viernes, de 8:00 a 17:00", timestamp: "Horario de entregas" },
+  { id: "s2", kind: "staff", message: "Las cotizaciones se responden en menos de 24 h hábiles", timestamp: "Tiempo de respuesta" },
 ]
 
-const StaffAnnouncements = () => {
-  const hasAnnouncements = announcements.length > 0
+// Texto del aviso según lo último que pasó en la solicitud
+const avisoDePedido = (p: PedidoDetalle): Announcement => {
+  const mensaje: Record<PedidoDetalle["estado"], string> = {
+    SOLICITADO: `Recibimos tu solicitud de ${p.curso}`,
+    COTIZADO: `Tu cotización de ${p.curso} está lista`,
+    CONFIRMADO: p.comprobante ? `Revisamos el pago de ${p.curso}` : `Falta el comprobante de ${p.curso}`,
+    PAGADO: `Pago validado: ${p.curso}`,
+    EN_COMPRA: `Compramos los materiales de ${p.curso}`,
+    LISTO: `${p.curso} está listo para entregarse`,
+    ENTREGADO: `${p.curso} fue entregado`,
+    CANCELADO: `${p.curso} fue cancelado`,
+  }
+  const e = etapa(p)
+  return {
+    id: p.id,
+    kind: "pedido",
+    message: mensaje[p.estado],
+    timestamp: hace(ultimaActividad(p)),
+    to: e.accion.to,
+    urgent: e.pendienteDelEstudiante,
+  }
+}
+
+const AnnouncementBody = ({ item }: { item: Announcement }) => (
+  <>
+    <Kind urgent={item.urgent}>{item.kind === "pedido" ? (item.urgent ? "Requiere tu acción" : "Tu pedido") : "Staff UVGo"}</Kind>
+    <Message>{item.message}</Message>
+    <Timestamp>{item.timestamp}</Timestamp>
+  </>
+)
+
+// Novedades de los 3 pedidos con actividad más reciente, seguidas de los avisos del staff
+const StaffAnnouncements = ({ recientes }: { recientes: PedidoDetalle[] }) => {
+  const announcements = [...recientes.slice(0, 3).map(avisoDePedido), ...avisosStaff]
+  const hasUrgent = announcements.some((a) => a.urgent)
 
   return (
     <Card>
       <Header>
         <Title>
-          <IconBadge active={hasAnnouncements}>
+          <IconBadge active={hasUrgent}>
             <FiBell size={16} />
           </IconBadge>
-          Avisos del Staff
+          Avisos
         </Title>
-        <StatusDot active={hasAnnouncements} />
+        <StatusDot active={hasUrgent} title={hasUrgent ? "Tienes pedidos que esperan tu respuesta" : "Todo en orden"} />
       </Header>
 
       <Content>
-        {hasAnnouncements ? (
+        {announcements.length > 0 ? (
           <Swiper
             modules={[Autoplay, Navigation, Pagination]}
-            autoplay={{ delay: 4500, disableOnInteraction: false }}
+            autoplay={{ delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true }}
             pagination={announcements.length > 1 ? { clickable: true } : false}
             navigation={announcements.length > 1}
             loop={announcements.length > 1}
           >
             {announcements.map((item) => (
               <SwiperSlide key={item.id}>
-                <Board>
-                  <Message>{item.message}</Message>
-                  <Timestamp>{item.timestamp}</Timestamp>
-                </Board>
+                {item.to ? (
+                  <BoardLink to={item.to}><AnnouncementBody item={item} /></BoardLink>
+                ) : (
+                  <Board><AnnouncementBody item={item} /></Board>
+                )}
               </SwiperSlide>
             ))}
           </Swiper>

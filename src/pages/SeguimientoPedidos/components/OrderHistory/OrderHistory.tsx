@@ -2,7 +2,7 @@ import { useState } from "react"
 import type { IconType } from "react-icons"
 import { FiCheckCircle, FiChevronDown, FiChevronUp, FiFileText, FiFlag, FiInfo, FiTag } from "react-icons/fi"
 import { MdDeliveryDining } from "react-icons/md"
-import { phaseIndex, phases, type Order, type OrderStatus } from "../../data"
+import { phaseIndex, phases, type Order, type OrderStatus, type TimelineEntry } from "../../data"
 import { CardTitle, SquareButton } from "../../SeguimientoPedidos.styles"
 import { HistoryCard, HistoryHeader, InfoHint, Node, NodeIcon, Nodes, RowBullet, TableWrap, Table, type NodeState } from "./OrderHistory.styles"
 
@@ -17,9 +17,19 @@ const phaseIcon: Record<OrderStatus, IconType> = {
 const nodeState = (index: number, current: number, status: OrderStatus): NodeState =>
   index < current || (index === current && status === "entregado") ? "done" : index === current ? "current" : "pending"
 
+// Fases que aún no ocurren: se listan en gris para que el estudiante vea lo que falta
+const pendingEntry = (phase: OrderStatus, order: Order): TimelineEntry => ({
+  phase,
+  time: "—",
+  location: phase === "en-ruta" ? `${order.origin} → ${order.destination}` : phase === "entregado" ? order.destination : "—",
+  action: phase === "en-ruta" ? "Sale a entregar" : phase === "entregado" ? "Entrega al estudiante" : "—",
+  detail: "Pendiente",
+})
+
 const OrderHistory = ({ order }: { order: Order }) => {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const current = phaseIndex(order.status)
+  const rows = phases.map((phase, index) => order.timeline[index] ?? pendingEntry(phase.id, order))
 
   return (
     <HistoryCard aria-label="Historial del pedido">
@@ -48,7 +58,7 @@ const OrderHistory = ({ order }: { order: Order }) => {
           const entry = order.timeline[index]
           return (
             <Node key={phase.id} state={state} aria-current={state === "current" ? "step" : undefined}>
-              <NodeIcon state={state}><Icon size={16} /></NodeIcon>
+              <NodeIcon state={state}><Icon size={18} /></NodeIcon>
               <strong>{phase.label}</strong>
               <small>{entry?.time ?? "—"}</small>
             </Node>
@@ -68,7 +78,7 @@ const OrderHistory = ({ order }: { order: Order }) => {
             </tr>
           </thead>
           <tbody>
-            {order.timeline.map((entry, index) => {
+            {rows.map((entry, index) => {
               const state = nodeState(index, current, order.status)
               return (
                 <tr key={entry.phase} data-state={state}>

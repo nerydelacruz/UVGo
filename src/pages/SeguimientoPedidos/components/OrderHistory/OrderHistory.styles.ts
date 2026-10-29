@@ -7,6 +7,7 @@ export const HistoryCard = styled(Card)`
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
   padding: ${(p) => p.theme.space.lg} ${(p) => p.theme.space.xl};
 `
 
@@ -73,9 +74,9 @@ export const Node = styled.li<{ state: NodeState }>`
   &:not(:last-of-type)::after {
     content: "";
     position: absolute;
-    top: 1.8rem;
-    left: calc(50% + 2.4rem);
-    width: calc(100% - 4.8rem);
+    top: 2.2rem;
+    left: calc(50% + 2.8rem);
+    width: calc(100% - 5.6rem);
     border-top: 2px ${(p) => (p.state === "done" ? "solid" : "dashed")}
       ${(p) => (p.state === "done" ? p.theme.color.accent : p.theme.color.border)};
   }
@@ -100,8 +101,8 @@ export const Node = styled.li<{ state: NodeState }>`
 export const NodeIcon = styled.span<{ state: NodeState }>`
   display: grid;
   place-items: center;
-  width: 3.6rem;
-  height: 3.6rem;
+  width: 4.4rem;
+  height: 4.4rem;
   border: 2px solid ${(p) => (p.state === "pending" ? p.theme.color.border : p.theme.color.accent)};
   border-radius: ${(p) => p.theme.radius.full};
   background: ${(p) => (p.state === "done" ? p.theme.color.accent : "white")};
@@ -111,6 +112,8 @@ export const NodeIcon = styled.span<{ state: NodeState }>`
 
 export const TableWrap = styled.div<{ expanded: boolean }>`
   max-height: ${(p) => (p.expanded ? "40rem" : "13.6rem")};
+  flex: 0 1 auto;
+  min-height: 0;
   margin-top: ${(p) => p.theme.space.md};
   overflow: auto;
   transition: max-height 250ms ease;

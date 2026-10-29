@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { FiBox, FiCrosshair, FiInfo, FiLayers, FiMap, FiMaximize2, FiMinimize2, FiMinus, FiPlus, FiX } from "react-icons/fi"
 import { MdDeliveryDining } from "react-icons/md"
 import { routeProgress, statusLabel, warehouse, type Order } from "../../data"
 import { CardTitle, Muted, SquareButton } from "../../SeguimientoPedidos.styles"
 import DeliveryMap, { type DeliveryMapHandle, type MapStyle, type RouteInfo } from "./DeliveryMap"
+import { SIMULAR_REPARTIDOR } from "./simulacion"
 import {
   AlertChip,
   AlertRow,
@@ -25,7 +26,24 @@ const PANEL_WIDTH = 300
 
 type View = "route" | "moto" | "free"
 
-const RouteOverview = ({ order }: { order: Order }) => {
+export interface RouteSummary {
+  distanceKm: number
+  etaMin: number
+}
+
+interface RouteOverviewProps {
+  order: Order
+  className?: string
+  /** Dato corto junto al título (p. ej. el número del pedido en el panel admin) */
+  titleExtra?: ReactNode
+  /** Barra flotante al pie del mapa; recibe la distancia y el tiempo ya calculados por Mapbox */
+  footer?: (summary: RouteSummary) => ReactNode
+}
+
+// Alto aproximado de la barra del pie, para que la ruta no quede debajo al encuadrarla
+const FOOTER_HEIGHT = 96
+
+const RouteOverview = ({ order, className, titleExtra, footer }: RouteOverviewProps) => {
   const mapRef = useRef<DeliveryMapHandle>(null)
   const [mapStyle, setMapStyle] = useState<MapStyle>("streets")
   const [is3d, setIs3d] = useState(false)
@@ -36,8 +54,11 @@ const RouteOverview = ({ order }: { order: Order }) => {
   const [routeInfo, setRouteInfo] = useState<{ id: string; info: RouteInfo } | null>(null)
 
   const isLive = order.status === "en-ruta"
+  // Solo hay repartidor que centrar si va en ruta (o si la moto está en simulación)
+  const motoVisible = isLive || SIMULAR_REPARTIDOR
   const info = routeInfo?.id === order.id ? routeInfo.info : null
   const distanceKm = info?.distanceKm ?? order.distanceKm
+  const etaMin = Math.max(order.etaMin, Math.round(info?.durationMin ?? 0))
   const view = viewState.id === order.id ? viewState.view : "route"
   const setView = (next: View) => setViewState({ id: order.id, view: next })
 
@@ -66,10 +87,13 @@ const RouteOverview = ({ order }: { order: Order }) => {
   const arrivalLabel = isLive ? `Llega ${order.deliveryAt.replace(/^Hoy, /, "")}` : order.status === "entregado" ? "Entregado" : "Destino"
 
   return (
-    <MapCard expanded={expanded} aria-label="Ruta de entrega">
+    <MapCard className={className} expanded={expanded} aria-label="Ruta de entrega">
       <MapHeader>
         <div>
-          <CardTitle>Ruta de entrega</CardTitle>
+          <CardTitle>
+            Ruta de entrega
+            {titleExtra && <Muted>{titleExtra}</Muted>}
+          </CardTitle>
           <Muted>
             Distancia: {distanceKm.toFixed(1)} km · {order.origin} → {order.destination}
           </Muted>
@@ -105,7 +129,7 @@ const RouteOverview = ({ order }: { order: Order }) => {
             title="Ubicación del repartidor"
             aria-label="Centrar en el repartidor"
             onClick={() => goTo("moto")}
-            disabled={!isLive}
+            disabled={!motoVisible}
           >
             <FiCrosshair size={17} />
           </SquareButton>
@@ -133,6 +157,7 @@ const RouteOverview = ({ order }: { order: Order }) => {
           mapStyle={mapStyle}
           is3d={is3d}
           rightInset={panelOpen ? PANEL_WIDTH : 0}
+          bottomInset={footer ? FOOTER_HEIGHT : 0}
           onRoute={(next) => setRouteInfo({ id: order.id, info: next })}
           onUserMove={() => setView("free")}
         />
@@ -161,7 +186,7 @@ const RouteOverview = ({ order }: { order: Order }) => {
               <dt>Salida</dt><dd>{order.origin}</dd>
               <dt>Destino</dt><dd>{order.destination}</dd>
               <dt>Distancia total</dt><dd>{distanceKm.toFixed(1)} km</dd>
-              <dt>Tiempo estimado</dt><dd>{isLive ? `${order.etaMin} min` : order.status === "entregado" ? "Completado" : `~${Math.max(order.etaMin, Math.round(info?.durationMin ?? 0))} min`}</dd>
+              <dt>Tiempo estimado</dt><dd>{isLive ? `${order.etaMin} min` : order.status === "entregado" ? "Completado" : `~${etaMin} min`}</dd>
               <dt>Repartidor</dt><dd>{order.status === "entregado" ? "Equipo UVGo" : "Por asignar"}</dd>
             </DetailList>
 
@@ -175,6 +200,8 @@ const RouteOverview = ({ order }: { order: Order }) => {
             <FiInfo size={14} /> Detalle de la ruta
           </ReopenButton>
         )}
+
+        {footer?.({ distanceKm, etaMin })}
 
         <ZoomControls aria-label="Zoom del mapa">
           <button type="button" aria-label="Acercar" onClick={() => mapRef.current?.zoomIn()}><FiPlus size={16} /></button>

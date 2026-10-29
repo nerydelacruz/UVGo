@@ -26,30 +26,29 @@ export const Shell = styled.div`
   }
 `
 
+// Arriba comprobante y estado de pago (a su alto natural), abajo el historial a todo lo ancho.
+// En escritorio todo cabe en la pantalla: el historial toma el alto que sobra y desplaza su tabla por dentro.
 export const Main = styled.main`
   display: grid;
-  grid-template-rows: minmax(34rem, 1fr) auto;
+  grid-template-rows: auto minmax(24rem, 1fr);
   min-width: 0;
   min-height: 0;
   gap: ${(p) => p.theme.space.lg};
 
   @media (max-width: 1180px) {
-    grid-template-rows: 52rem auto;
-  }
-
-  @media (max-width: 640px) {
-    grid-template-rows: 44rem auto;
+    grid-template-rows: auto auto;
   }
 `
 
-export const BottomStrip = styled.div`
+// Las dos tarjetas se estiran a la misma altura
+export const TopRow = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(28rem, 34rem);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
   gap: ${(p) => p.theme.space.lg};
-  min-height: 0;
 
-  @media (max-width: 1400px) {
-    grid-template-columns: 1fr;
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 `
 

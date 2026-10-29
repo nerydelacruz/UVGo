@@ -1,6 +1,8 @@
 import { useTheme } from "@emotion/react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts"
+import type { PedidoDetalle } from "@/models/pedido.model"
+import { porMes, porSemana } from "../../resumen"
 import { Card, ChartWrapper, Header, HeaderText, PeriodSelect, Subtitle, Title, TooltipBubble } from "./OrderTrendsChart.styles"
 
 type Period = "mensual" | "semanal"
@@ -9,30 +11,6 @@ interface DataPoint {
   label: string
   total: number
 }
-
-const monthly: DataPoint[] = [
-  { label: "Ene", total: 1 },
-  { label: "Feb", total: 2 },
-  { label: "Mar", total: 0 },
-  { label: "Abr", total: 3 },
-  { label: "May", total: 1 },
-  { label: "Jun", total: 4 },
-  { label: "Jul", total: 2 },
-  { label: "Ago", total: 1 },
-  { label: "Sep", total: 3 },
-  { label: "Oct", total: 2 },
-  { label: "Nov", total: 1 },
-  { label: "Dic", total: 0 },
-]
-
-const weekly: DataPoint[] = [
-  { label: "S1", total: 1 },
-  { label: "S2", total: 2 },
-  { label: "S3", total: 0 },
-  { label: "S4", total: 3 },
-  { label: "S5", total: 1 },
-  { label: "S6", total: 2 },
-]
 
 interface BarShapeProps {
   x?: number
@@ -87,25 +65,26 @@ const CustomTick = ({ x = 0, y = 0, index, payload, activeIndex, activeColor, in
   )
 }
 
-const OrderTrendsChart = () => {
+// Solicitudes del estudiante (incluidas las canceladas: cuentan como actividad) por mes o por semana
+const OrderTrendsChart = ({ pedidos }: { pedidos: PedidoDetalle[] }) => {
   const theme = useTheme()
   const [period, setPeriod] = useState<Period>("mensual")
   const [hovered, setHovered] = useState<number | null>(null)
 
-  const data = period === "mensual" ? monthly : weekly
-  const maxTotal = Math.max(...data.map((d) => d.total), 1)
-  const peakIndex = data.findIndex((d) => d.total === maxTotal)
-  const activeIndex = hovered ?? peakIndex
+  const data: DataPoint[] = useMemo(() => (period === "mensual" ? porMes(pedidos) : porSemana(pedidos)), [period, pedidos])
+  // Resalta el periodo actual (no el pico): así se lee "cómo voy ahora"
+  const currentIndex = period === "mensual" ? new Date().getMonth() : data.length - 1
+  const activeIndex = hovered ?? currentIndex
   const totalSum = data.reduce((sum, point) => sum + point.total, 0)
-  const periodLabel = period === "mensual" ? "este año" : "en estas 6 semanas"
+  const periodLabel = period === "mensual" ? "este año" : "en las últimas 6 semanas"
 
   return (
     <Card>
       <Header>
         <HeaderText>
-          <Title>Mis Pedidos</Title>
+          <Title>Mis solicitudes</Title>
           <Subtitle>
-            {totalSum} pedidos {periodLabel}
+            {totalSum} {totalSum === 1 ? "solicitud" : "solicitudes"} {periodLabel}
           </Subtitle>
         </HeaderText>
         <PeriodSelect value={period} onChange={(e) => setPeriod(e.target.value as Period)}>
@@ -141,13 +120,14 @@ const OrderTrendsChart = () => {
                 const point = payload[0].payload as DataPoint
                 return (
                   <TooltipBubble>
-                    {point.label} · <strong>{point.total}</strong> {point.total === 1 ? "pedido" : "pedidos"}
+                    {point.label} · <strong>{point.total}</strong> {point.total === 1 ? "solicitud" : "solicitudes"}
                   </TooltipBubble>
                 )
               }}
             />
             <Bar
               dataKey="total"
+              minPointSize={5}
               maxBarSize={18}
               onMouseEnter={(_, index) => setHovered(index)}
               onMouseLeave={() => setHovered(null)}

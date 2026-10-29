@@ -37,6 +37,17 @@ export interface Order {
   issuedAt: string
   dueAt: string
   timeline: TimelineEntry[]
+  items: OrderItem[]
+  dueDate: string // yyyy-mm-dd, para la cuenta regresiva
+  comprobanteEnviado: string | null // cuándo subió el estudiante el comprobante
+  pagadoEl: string | null // cuándo validó el pago el administrador
+}
+
+export interface OrderItem {
+  id: string
+  descripcion: string
+  cantidad: number
+  subtotal: number | null
 }
 
 export const phases: Array<{ id: OrderStatus; label: string }> = [
@@ -81,8 +92,6 @@ export const formatQ = (value: number) => `Q ${value.toLocaleString("es-GT", { m
 export const orderAction = (order: Order) =>
   order.paymentStatus === "pendiente" && order.status === "confirmado"
     ? "Pagar"
-    : order.status === "en-ruta"
-      ? "Ver ruta"
-      : order.status === "entregado"
+    : order.status === "entregado"
         ? "Ver detalle"
         : "Ver pedido"

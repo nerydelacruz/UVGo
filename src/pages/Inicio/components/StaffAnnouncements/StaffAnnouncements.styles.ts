@@ -1,4 +1,5 @@
 import styled from "@emotion/styled"
+import { Link } from "react-router-dom"
 
 export const Card = styled.div`
   display: flex;
@@ -103,6 +104,31 @@ export const Board = styled.div`
   border-radius: ${(p) => p.theme.radius.md};
   background: ${(p) => p.theme.color.surface};
   padding: ${(p) => p.theme.space.lg};
+`
+
+// El mismo tablero cuando el aviso lleva a la pantalla del pedido
+export const BoardLink = styled(Board.withComponent(Link))`
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    box-shadow: inset 0 0 0 1px rgba(224, 122, 95, 0.4);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(224, 122, 95, 0.4);
+    outline-offset: -3px;
+  }
+`
+
+// Origen del aviso: "Tu pedido", "Requiere tu acción" (coral) o "Staff UVGo"
+export const Kind = styled.span<{ urgent?: boolean }>`
+  border-radius: ${(p) => p.theme.radius.full};
+  padding: 0.2rem 0.8rem;
+  background: ${(p) => (p.urgent ? "rgba(224, 122, 95, 0.14)" : p.theme.color.bg)};
+  font-size: 1.05rem;
+  font-weight: ${(p) => p.theme.font.weight.semibold};
+  color: ${(p) => (p.urgent ? p.theme.color.accent : p.theme.color.textMuted)};
 `
 
 export const Message = styled.p`

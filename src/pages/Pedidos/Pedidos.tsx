@@ -1,89 +1,21 @@
-import cajaUVGo from "../../assets/caja_uvgo.png"
-import OrderItemCard, { type OrderItem } from "./components/OrderItemCard/OrderItemCard"
-import { Body, Header, Panel, Tab, TabBadge, Title } from "./Pedidos.styles"
+import { FiPlus } from "react-icons/fi"
+import { Link } from "react-router-dom"
+import type { PedidoDetalle } from "@/models/pedido.model"
+import RequestCard from "./components/RequestCard/RequestCard"
+import { Body, Empty, Header, Panel, SeeAll, Tab, TabBadge, Title } from "./Pedidos.styles"
 
-const items: OrderItem[] = [
-  {
-    name: "Kit de Laboratorio",
-    image: cajaUVGo,
-    unitPrice: 5,
-    quantity: 2,
-    options: [
-      { label: "Temperature", value: "Ice" },
-      { label: "Size", value: "Large" },
-      { label: "Sugar", value: "Normal" },
-      { label: "Topping", value: "Boba" },
-    ],
-    note: "1 item no sugar, 2 item normal sugar",
-  },
-  {
-    name: "Kit de Laboratorio",
-    image: cajaUVGo,
-    unitPrice: 5,
-    quantity: 2,
-    options: [
-      { label: "Temperature", value: "Ice" },
-      { label: "Size", value: "Large" },
-      { label: "Sugar", value: "Normal" },
-      { label: "Topping", value: "Boba" },
-    ],
-    note: "1 item no sugar, 2 item normal sugar",
-  },
-  {
-    name: "Kit de Laboratorio",
-    image: cajaUVGo,
-    unitPrice: 5,
-    quantity: 2,
-    options: [
-      { label: "Temperature", value: "Ice" },
-      { label: "Size", value: "Large" },
-      { label: "Sugar", value: "Normal" },
-      { label: "Topping", value: "Boba" },
-    ],
-    note: "1 item no sugar, 2 item normal sugar",
-  },
-  {
-    name: "Kit de Laboratorio",
-    image: cajaUVGo,
-    unitPrice: 5,
-    quantity: 2,
-    options: [
-      { label: "Temperature", value: "Ice" },
-      { label: "Size", value: "Large" },
-      { label: "Sugar", value: "Normal" },
-      { label: "Topping", value: "Boba" },
-    ],
-    note: "1 item no sugar, 2 item normal sugar",
-  },
-  {
-    name: "Kit de Laboratorio",
-    image: cajaUVGo,
-    unitPrice: 5,
-    quantity: 2,
-    options: [
-      { label: "Temperature", value: "Ice" },
-      { label: "Size", value: "Large" },
-      { label: "Sugar", value: "Normal" },
-      { label: "Topping", value: "Boba" },
-    ],
-    note: "1 item no sugar, 2 item normal sugar",
-  },
-  {
-    name: "Kit de Laboratorio",
-    image: cajaUVGo,
-    unitPrice: 5,
-    quantity: 2,
-    options: [
-      { label: "Temperature", value: "Ice" },
-      { label: "Size", value: "Large" },
-      { label: "Sugar", value: "Normal" },
-      { label: "Topping", value: "Boba" },
-    ],
-    note: "1 item no sugar, 2 item normal sugar",
-  },
-]
+// Cuántas solicitudes recientes caben en la columna antes de "Ver todas"
+const MAXIMO = 6
 
-const Pedidos = () => {
+interface PedidosProps {
+  recientes: PedidoDetalle[]
+  cargando: boolean
+}
+
+// Columna derecha del inicio: las solicitudes con actividad más reciente
+const Pedidos = ({ recientes, cargando }: PedidosProps) => {
+  const visibles = recientes.slice(0, MAXIMO)
+
   return (
     <Panel
       initial={{ opacity: 0, x: 40 }}
@@ -94,15 +26,28 @@ const Pedidos = () => {
       <Header>
         <Title>Pedidos</Title>
         <Tab>
-          Guardados
-          <TabBadge>{items.length}</TabBadge>
+          Recientes
+          <TabBadge>{recientes.length}</TabBadge>
         </Tab>
       </Header>
 
       <Body>
-        {items.map((item) => (
-          <OrderItemCard key={item.name} item={item} />
-        ))}
+        {cargando ? (
+          <Empty>Cargando tus solicitudes…</Empty>
+        ) : visibles.length === 0 ? (
+          <Empty>
+            <strong>Aún no tienes solicitudes</strong>
+            <span>Cuando pidas una cotización aparecerá aquí.</span>
+            <Link to="/cotizar"><FiPlus size={13} aria-hidden /> Nueva cotización</Link>
+          </Empty>
+        ) : (
+          <>
+            {visibles.map((pedido) => (
+              <RequestCard key={pedido.id} pedido={pedido} />
+            ))}
+            {recientes.length > MAXIMO && <SeeAll to="/mis-solicitudes">Ver todas ({recientes.length})</SeeAll>}
+          </>
+        )}
       </Body>
     </Panel>
   )
