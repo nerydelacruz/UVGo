@@ -37,7 +37,7 @@ export interface SolicitudRequest {
 
 export interface ItemPedido {
   id: string
-  tipo: "CATALOGO" | "WEB" | "TEXTO"
+  tipo: "CATALOGO" | "WEB" | "TEXTO" | "LISTA"
   articuloId: number | null
   descripcion: string
   cantidad: number
@@ -48,6 +48,10 @@ export interface ItemPedido {
   monedaReferencia: string | null
   precioUnitario: number | null
   subtotal: number | null
+  nombreMaterial: string | null
+  unidad: string | null
+  observacionesMaterial: string | null
+  referenciaMaterial: string | null
   // Posible artículo del stock para un material del PDF; el sistema no estuvo seguro y lo deja al administrador
   sugerenciaArticuloId: number | null
   sugerenciaDescripcion: string | null

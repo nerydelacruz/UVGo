@@ -49,8 +49,15 @@ import {
   Totals,
 } from "./SolicitudDetail.styles"
 
-type Tab = "CATALOGO" | "WEB" | "TEXTO"
+type Tab = ItemPedido['tipo']
 const MONEDA = "GTQ"
+
+// Igual que el servidor: redondear cada renglón a centavos antes de sumar.
+const subtotalMaterial = (precio: number, cantidad: number) => {
+  const centavos = BigInt(Math.round(precio * 100))
+  const milesimas = BigInt(Math.round(cantidad * 1000))
+  return Number((centavos * milesimas + 500n) / 1000n) / 100
+}
 
 // Precio inicial de cada producto: el ya cotizado o, para el catálogo, su precio en quetzales
 const precioInicial = (item: ItemPedido) => {
@@ -105,9 +112,10 @@ const SolicitudDetail = ({ pedido, cotizar, onCancelado, onPagado }: SolicitudDe
   const editable = esCotizable(pedido.estado)
   const web = pedido.productos.filter((p) => p.tipo === "WEB")
   const catalogo = pedido.productos.filter((p) => p.tipo === "CATALOGO")
-  const texto = pedido.productos.filter((p) => p.tipo === "TEXTO")
+  const lista = pedido.productos.filter((p) => p.tipo === "LISTA")
 
-  const [tab, setTab] = useState<Tab>(web.length > 0 ? "WEB" : catalogo.length > 0 ? "CATALOGO" : "TEXTO")
+  const texto = pedido.productos.filter((p) => p.tipo === "TEXTO")
+  const [tab, setTab] = useState<Tab>(lista.length > 0 ? "LISTA" : web.length > 0 ? "WEB" : catalogo.length > 0 ? "CATALOGO" : "TEXTO")
   const [precios, setPrecios] = useState<Record<string, string>>(() =>
     Object.fromEntries(pedido.productos.map((item) => [item.id, precioInicial(item)])),
   )
@@ -120,7 +128,7 @@ const SolicitudDetail = ({ pedido, cotizar, onCancelado, onPagado }: SolicitudDe
   const montos = Object.fromEntries(pedido.productos.map((item) => [item.id, leerMonto(precios[item.id] ?? "")]))
   const faltan = (items: ItemPedido[]) => items.filter((item) => montos[item.id] === null).length
   const cargoMonto = leerMonto(cargo)
-  const subtotal = pedido.productos.reduce((suma, item) => suma + (montos[item.id] ?? 0) * item.cantidad, 0)
+  const subtotal = pedido.productos.reduce((suma, item) => suma + subtotalMaterial(montos[item.id] ?? 0, item.cantidad), 0)
   const listo = faltan(pedido.productos) === 0 && cargoMonto !== null
   const errorDeEsta = cotizar.isError && cotizar.variables?.pedidoId === pedido.id
 
@@ -141,10 +149,10 @@ const SolicitudDetail = ({ pedido, cotizar, onCancelado, onPagado }: SolicitudDe
   const tabs: Array<{ id: Tab; label: string; items: ItemPedido[] }> = [
     { id: "WEB", label: "De la web", items: web },
     { id: "CATALOGO", label: "Del catálogo", items: catalogo },
-    // Solo aparece cuando la solicitud viene de un PDF
+    { id: "LISTA", label: "De una lista", items: lista },
     ...(texto.length > 0 ? [{ id: "TEXTO" as const, label: "Del PDF", items: texto }] : []),
   ]
-  const visibles = tab === "WEB" ? web : tab === "CATALOGO" ? catalogo : texto
+  const visibles = tab === "LISTA" ? lista : tab === "WEB" ? web : tab === "TEXTO" ? texto : catalogo
 
   const renderItem = (item: ItemPedido) => {
     const monto = montos[item.id]
@@ -155,9 +163,14 @@ const SolicitudDetail = ({ pedido, cotizar, onCancelado, onPagado }: SolicitudDe
           {item.imagen ? <img src={item.imagen} alt="" loading="lazy" /> : <FiImage size={18} aria-hidden />}
         </Thumb>
         <RowInfo>
-          <RowTitle title={item.descripcion}>{item.descripcion}</RowTitle>
+          <RowTitle title={item.nombreMaterial ?? item.descripcion}>{item.nombreMaterial ?? item.descripcion}</RowTitle>
+          {item.tipo === 'LISTA' && <>
+            <p>{item.descripcion}</p>
+            {item.observacionesMaterial && <p>Observaciones: {item.observacionesMaterial}</p>}
+            {item.referenciaMaterial && <p>Fuente: {item.referenciaMaterial}</p>}
+          </>}
           <RowMeta>
-            <span>Cantidad: {item.cantidad}</span>
+            <span>Cantidad: {item.cantidad} {item.unidad}</span>
             {item.tienda && <span>{item.tienda}</span>}
             {ref && <span>{ref}</span>}
             {item.tipo === "TEXTO" && item.sugerenciaDescripcion && (
@@ -184,7 +197,7 @@ const SolicitudDetail = ({ pedido, cotizar, onCancelado, onPagado }: SolicitudDe
                 step="0.01"
                 value={precios[item.id] ?? ""}
                 placeholder="0.00"
-                aria-label={`Precio unitario de ${item.descripcion}`}
+                aria-label={`Precio por ${item.unidad || 'unidad'} de ${item.nombreMaterial ?? item.descripcion}`}
                 onFocus={seleccionarTodo}
                 onChange={(e) => setPrecios((current) => ({ ...current, [item.id]: e.target.value }))}
               />
@@ -196,7 +209,7 @@ const SolicitudDetail = ({ pedido, cotizar, onCancelado, onPagado }: SolicitudDe
             {editable
               ? monto === null
                 ? "Falta el precio"
-                : `Subtotal ${formatPrecio(monto * item.cantidad, MONEDA)}`
+                : `Subtotal ${formatPrecio(subtotalMaterial(monto, item.cantidad), MONEDA)}`
               : item.subtotal !== null && `Subtotal ${formatPrecio(item.subtotal, MONEDA)}`}
           </Subtotal>
         </PriceCell>
@@ -268,8 +281,8 @@ const SolicitudDetail = ({ pedido, cotizar, onCancelado, onPagado }: SolicitudDe
       <ScrollArea role="tabpanel" id="panel-productos" aria-labelledby={`tab-${tab}`}>
         {visibles.length === 0 ? (
           <EmptyState>
-            <strong>Sin productos en esta pestaña</strong>
-            <p>Los productos de esta solicitud están en las otras pestañas.</p>
+            <strong>No hay productos de este origen</strong>
+            <p>Revisa las otras pestañas de la solicitud.</p>
           </EmptyState>
         ) : (
           visibles.map(renderItem)

@@ -14,6 +14,7 @@ const ORIGEN: Record<ItemPedido["tipo"], { label: string; icon: typeof FiGlobe }
   CATALOGO: { label: "Catálogo", icon: FiBookOpen },
   WEB: { label: "Tienda web", icon: FiGlobe },
   TEXTO: { label: "Lista del PDF", icon: FiFileText },
+  LISTA: { label: "Lista guardada", icon: FiFileText },
 }
 
 // Productos del pedido seleccionado, con el precio cotizado (o el de referencia si aún no se cotizó)
@@ -33,9 +34,9 @@ const ProductosPedido = ({ pedido, estado }: ProductosPedidoProps) => (
           <Item key={item.id}>
             <Thumb size="sm">{item.imagen ? <img src={item.imagen} alt="" loading="lazy" /> : <Icon size={18} aria-hidden />}</Thumb>
             <Texto>
-              <strong title={item.descripcion}>{item.descripcion}</strong>
+              <strong title={item.descripcion}>{item.nombreMaterial ?? item.descripcion}</strong>
               <small>
-                {label} · ×{item.cantidad}
+                {label} · ×{item.cantidad} {item.unidad}
               </small>
             </Texto>
             <Precio>
