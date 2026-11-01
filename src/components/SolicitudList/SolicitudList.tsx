@@ -68,7 +68,8 @@ const SolicitudList = ({ titulo, vacio, solicitudes, total, selectedId, isLoadin
 
       {solicitudes.map((solicitud) => {
         const web = solicitud.productos.filter((p) => p.tipo === "WEB").length
-        const catalogo = solicitud.productos.length - web
+        const catalogo = solicitud.productos.filter((p) => p.tipo === "CATALOGO").length
+        const lista = solicitud.productos.filter((p) => p.tipo === "LISTA" || p.tipo === "TEXTO").length
         const selected = solicitud.id === selectedId
         return (
           <Item
@@ -95,6 +96,7 @@ const SolicitudList = ({ titulo, vacio, solicitudes, total, selectedId, isLoadin
                 ))}
               {catalogo > 0 && <Badge tone="neutral">{catalogo} del catálogo</Badge>}
               {web > 0 && <Badge tone="neutral">{web} de la web</Badge>}
+              {lista > 0 && <Badge tone="neutral">{lista} de una lista</Badge>}
             </Badges>
           </Item>
         )

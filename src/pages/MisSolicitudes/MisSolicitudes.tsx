@@ -1,8 +1,12 @@
 import { useState } from "react"
+import { useSearchParams } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
+import { obtenerSolicitud } from "@/services/pedido.service"
+import { useAuthStore } from "@/store/auth.store"
 import { FiCheckCircle } from "react-icons/fi"
 import SolicitudList from "@/components/SolicitudList/SolicitudList"
 import { usePagarPedido, usePedidos } from "@/hooks/usePedidos"
-import { Aviso, EmptyState, Eyebrow, Header, Page, Panel, Title } from "@/styles/shared.styles"
+import { Aviso, EmptyState, ErrorText, GhostButton, Eyebrow, Header, Page, Panel, Title } from "@/styles/shared.styles"
 import CotizacionDetail from "./components/CotizacionDetail/CotizacionDetail"
 import { Split } from "./MisSolicitudes.styles"
 
@@ -11,10 +15,18 @@ const MisSolicitudes = () => {
   // Sin filtro: el backend devuelve solo las del estudiante autenticado, más recientes primero
   const { data, isLoading, isError, refetch } = usePedidos()
   const solicitudes = data?.contenido ?? []
+  const usuario = useAuthStore(s => s.usuario?.id)
+  const [params, setParams] = useSearchParams()
+  const enlaceId = params.get('solicitud')
+  const enlazada = useQuery({
+    queryKey: ['pedidos', 'detalle', usuario, enlaceId],
+    queryFn: () => obtenerSolicitud(enlaceId!),
+    enabled: !!usuario && !!enlaceId,
+  })
 
   const [selectedId, setSelectedId] = useState<string>()
   // Sin selección se abre primero la que espera pago (cotizada o confirmada sin comprobante); si no hay, la más reciente
-  const selected =
+  const selected = enlaceId ? enlazada.data :
     solicitudes.find((s) => s.id === selectedId) ??
     solicitudes.find((s) => s.estado === "COTIZADO" || (s.estado === "CONFIRMADO" && !s.comprobante)) ??
     solicitudes[0]
@@ -23,6 +35,7 @@ const MisSolicitudes = () => {
   const [aviso, setAviso] = useState<string>()
 
   const seleccionar = (id: string) => {
+    setParams({})
     pagar.reset()
     setAviso(undefined)
     setSelectedId(id)
@@ -67,7 +80,14 @@ const MisSolicitudes = () => {
           onSelect={seleccionar}
         />
 
-        {selected ? (
+        {enlaceId && (enlazada.isPending || enlazada.isError) ? (
+          <Panel>
+            {enlazada.isPending ? <p>Cargando solicitud…</p> : <>
+              <ErrorText role="alert">No se pudo abrir la solicitud. Puede no estar disponible para tu cuenta.</ErrorText>
+              <GhostButton onClick={() => void enlazada.refetch()}>Reintentar</GhostButton>
+            </>}
+          </Panel>
+        ) : selected ? (
           <CotizacionDetail
             key={`${selected.id}-${selected.version}`}
             pedido={selected}

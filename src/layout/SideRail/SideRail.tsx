@@ -13,6 +13,7 @@ type NavItem = { label: string; icon: IconType; to?: string; match?: string; end
 // Cada vista tiene su propio menú; la de admin está casi vacía mientras se construye
 const items: Record<Vista, NavItem[]> = {
   usuario: [
+    { label: "Materiales con IA", icon: FiFileText, to: "/materiales-ia" },
     { label: "Inicio", icon: FiHome, to: "/dashboard" },
     { label: "Cotizar", icon: FiFileText, to: "/cotizar/electronica", match: "/cotizar" },
     { label: "Mis solicitudes", icon: FiInbox, to: "/mis-solicitudes" },

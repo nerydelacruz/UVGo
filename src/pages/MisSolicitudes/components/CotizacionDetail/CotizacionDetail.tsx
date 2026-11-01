@@ -272,9 +272,14 @@ const CotizacionDetail = ({ pedido, pagar, onRechazada }: CotizacionDetailProps)
                   {item.imagen ? <img src={item.imagen} alt="" loading="lazy" /> : <FiImage size={18} aria-hidden />}
                 </Thumb>
                 <RowInfo>
-                  <strong title={item.descripcion}>{item.descripcion}</strong>
+                  <strong title={item.nombreMaterial ?? item.descripcion}>{item.nombreMaterial ?? item.descripcion}</strong>
+                  {item.tipo === 'LISTA' && <>
+                    <p>{item.descripcion}</p>
+                    {item.observacionesMaterial && <p>{item.observacionesMaterial}</p>}
+                    {item.referenciaMaterial && <p>Fuente: {item.referenciaMaterial}</p>}
+                  </>}
                   <span>
-                    Cantidad: {item.cantidad}
+                    Cantidad: {item.cantidad} {item.unidad}
                     {item.tienda ? ` · ${item.tienda}` : ""}
                   </span>
                 </RowInfo>
@@ -283,7 +288,7 @@ const CotizacionDetail = ({ pedido, pagar, onRechazada }: CotizacionDetailProps)
                     <>
                       <strong>{formatPrecio(item.subtotal, MONEDA)}</strong>
                       <span>
-                        {item.cantidad} × {formatPrecio(item.precioUnitario, MONEDA)}
+                        {item.cantidad} {item.unidad} × {formatPrecio(item.precioUnitario, MONEDA)}
                       </span>
                     </>
                   ) : (

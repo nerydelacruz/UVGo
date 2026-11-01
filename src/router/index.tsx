@@ -1,4 +1,5 @@
 import Dashboard from "@/pages/Inicio/Dashboard";
+import MaterialesIA from "@/pages/MaterialesIA/MaterialesIA";
 import SeguimientoPedidos from "@/pages/SeguimientoPedidos/SeguimientoPedidos";
 import CotizarCategoria from "@/pages/CotizarCategoria/CotizarCategoria";
 import MisSolicitudes from "@/pages/MisSolicitudes/MisSolicitudes";
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
         path: '/',
         element:(<RequireAuth><Layout/></RequireAuth>),
         children:[
+            { path: 'materiales-ia', element: <MaterialesIA/> },
             {
                 index: true,
                 element:(<Dashboard/>)

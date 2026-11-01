@@ -34,7 +34,7 @@ export interface SolicitudRequest {
 
 export interface ItemPedido {
   id: string
-  tipo: "CATALOGO" | "WEB"
+  tipo: "CATALOGO" | "WEB" | "TEXTO" | "LISTA"
   articuloId: number | null
   descripcion: string
   cantidad: number
@@ -45,6 +45,10 @@ export interface ItemPedido {
   monedaReferencia: string | null
   precioUnitario: number | null
   subtotal: number | null
+  nombreMaterial: string | null
+  unidad: string | null
+  observacionesMaterial: string | null
+  referenciaMaterial: string | null
 }
 
 // Comprobante de pago guardado en Azure Blob Storage (el archivo se pide aparte: GET /{id}/comprobante)

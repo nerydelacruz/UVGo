@@ -1,6 +1,11 @@
 import { api } from './api'
 import type { CotizacionRequest, EstadoPedido, Pagina, PedidoDetalle, SolicitudRequest } from '@/models/pedido.model'
 
+export const obtenerSolicitud = async (id: string): Promise<PedidoDetalle> => {
+  const { data } = await api.get<PedidoDetalle>(`/api/v1/pedidos/${id}`)
+  return data
+}
+
 // El estudiante pide una cotización; el backend guarda una copia de cada producto
 export const crearSolicitud = async (solicitud: SolicitudRequest): Promise<PedidoDetalle> => {
   const { data } = await api.post<PedidoDetalle>('/api/v1/pedidos', solicitud)
