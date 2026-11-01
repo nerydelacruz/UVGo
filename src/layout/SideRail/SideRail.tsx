@@ -15,7 +15,7 @@ const items: Record<Vista, NavItem[]> = {
   usuario: [
     { label: "Materiales con IA", icon: FiFileText, to: "/materiales-ia" },
     { label: "Inicio", icon: FiHome, to: "/dashboard" },
-    { label: "Cotizar", icon: FiFileText, to: "/cotizar/electronica", match: "/cotizar" },
+    { label: "Cotizar", icon: FiFileText, to: "/cotizar" },
     { label: "Mis solicitudes", icon: FiInbox, to: "/mis-solicitudes" },
     { label: "Seguimiento de pedidos", icon: FiNavigation, to: "/seguimiento-pedidos" },
     { label: "Perfil", icon: FiUser },

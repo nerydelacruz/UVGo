@@ -1,11 +1,17 @@
 import axios from "axios"
 import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
-import { FiAlertCircle, FiCheck, FiImage, FiMinus, FiPlus, FiX } from "react-icons/fi"
+import { FiAlertCircle, FiCheck, FiFileText, FiImage, FiMinus, FiPlus, FiX } from "react-icons/fi"
 import Dialog from "@/components/Dialog/Dialog"
 import { Actions, DialogText, DialogTitle, FormBody, FormField } from "@/components/Dialog/Dialog.styles"
 import { useCrearSolicitud } from "@/hooks/usePedidos"
-import { CANTIDAD_MAX, CANTIDAD_MIN, PRODUCTOS_MAX, type ProductoSolicitud } from "@/models/pedido.model"
+import {
+  CANTIDAD_MAX,
+  CANTIDAD_MIN,
+  OBSERVACIONES_MAX,
+  PRODUCTOS_MAX,
+  type ProductoSolicitud,
+} from "@/models/pedido.model"
 import { ErrorText, GhostButton, PrimaryButton } from "@/styles/shared.styles"
 import { getErrorMessage } from "@/utilities/apiError"
 import { hoyISO } from "@/utilities/date"
@@ -44,6 +50,13 @@ const aProductos = (items: ItemSeleccionado[]): ProductoSolicitud[] =>
   items.map((item) =>
     item.origen === "catalogo"
       ? { articuloId: item.producto.id, cantidad: item.cantidad }
+      : item.origen === "texto"
+      ? {
+          texto: item.texto,
+          ...(item.codigo ? { codigo: item.codigo.slice(0, 100) } : {}),
+          ...(item.termino ? { termino: item.termino.slice(0, 200) } : {}),
+          cantidad: item.cantidad,
+        }
       : {
           cantidad: item.cantidad,
           web: {
@@ -62,7 +75,13 @@ const mensajeError = (error: unknown) =>
     ? "Solo las cuentas de estudiante pueden solicitar cotizaciones."
     : getErrorMessage(error, "No pudimos enviar tu solicitud. Intenta de nuevo.")
 
-const Formulario = ({ items, onCantidad, onQuitar, onCreada, onClose }: Omit<CrearSolicitudDialogProps, "open">) => {
+const Formulario = ({
+  items,
+  onCantidad,
+  onQuitar,
+  onCreada,
+  onClose,
+}: Omit<CrearSolicitudDialogProps, "open">) => {
   const crear = useCrearSolicitud()
   const navigate = useNavigate()
   const [curso, setCurso] = useState("")
@@ -112,6 +131,8 @@ const Formulario = ({ items, onCantidad, onQuitar, onCreada, onClose }: Omit<Cre
   }
 
   const demasiados = items.length > PRODUCTOS_MAX
+  // maxLength no recorta un valor inicial largo (la lista del PDF), así que se valida aparte
+  const observacionesLargas = observaciones.trim().length > OBSERVACIONES_MAX
 
   return (
     <FormBody onSubmit={handleSubmit}>
@@ -129,13 +150,18 @@ const Formulario = ({ items, onCantidad, onQuitar, onCreada, onClose }: Omit<Cre
         ) : (
           <ItemList>
             {items.map((item) => {
-              const nombre = item.origen === "catalogo" ? item.producto.nombre : item.producto.titulo
-              const origen = item.origen === "catalogo" ? "Stock UVGo" : (item.producto.tienda ?? "Web")
+              const nombre =
+                item.origen === "catalogo" ? item.producto.nombre : item.origen === "web" ? item.producto.titulo : item.texto
+              const origen =
+                item.origen === "catalogo" ? "Stock UVGo" : item.origen === "web" ? (item.producto.tienda ?? "Web") : "Material del PDF"
+              const imagen = item.origen === "texto" ? null : item.producto.imagen
               return (
                 <Item key={item.key}>
                   <ItemThumb>
-                    {item.producto.imagen ? (
-                      <img src={item.producto.imagen} alt="" loading="lazy" />
+                    {imagen ? (
+                      <img src={imagen} alt="" loading="lazy" />
+                    ) : item.origen === "texto" ? (
+                      <FiFileText size={16} aria-hidden />
                     ) : (
                       <FiImage size={16} aria-hidden />
                     )}
@@ -227,10 +253,17 @@ const Formulario = ({ items, onCantidad, onQuitar, onCreada, onClose }: Omit<Cre
         <textarea
           value={observaciones}
           onChange={(e) => setObservaciones(e.target.value)}
-          maxLength={2000}
+          maxLength={OBSERVACIONES_MAX}
           placeholder="Marca, modelo o cualquier detalle que nos ayude a conseguirlo"
         />
       </FormField>
+      {observacionesLargas && (
+        <ErrorText role="alert">
+          <FiAlertCircle size={14} aria-hidden />
+          Las observaciones admiten hasta {OBSERVACIONES_MAX} caracteres ({observaciones.trim().length} ahora). Resume la
+          lista de materiales.
+        </ErrorText>
+      )}
 
       {crear.isError && (
         <ErrorText role="alert">
@@ -243,7 +276,7 @@ const Formulario = ({ items, onCantidad, onQuitar, onCreada, onClose }: Omit<Cre
         <GhostButton type="button" onClick={onClose} disabled={crear.isPending}>
           Cancelar
         </GhostButton>
-        <PrimaryButton type="submit" disabled={crear.isPending || items.length === 0 || demasiados}>
+        <PrimaryButton type="submit" disabled={crear.isPending || items.length === 0 || demasiados || observacionesLargas}>
           {crear.isPending ? "Enviando…" : "Enviar solicitud"}
         </PrimaryButton>
       </Actions>

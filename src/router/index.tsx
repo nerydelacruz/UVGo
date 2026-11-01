@@ -2,6 +2,7 @@ import Dashboard from "@/pages/Inicio/Dashboard";
 import MaterialesIA from "@/pages/MaterialesIA/MaterialesIA";
 import SeguimientoPedidos from "@/pages/SeguimientoPedidos/SeguimientoPedidos";
 import CotizarCategoria from "@/pages/CotizarCategoria/CotizarCategoria";
+import CotizarInicio from "@/pages/CotizarInicio/CotizarInicio";
 import MisSolicitudes from "@/pages/MisSolicitudes/MisSolicitudes";
 import AdminHome from "@/pages/Admin/AdminHome";
 import Solicitudes from "@/pages/Admin/Solicitudes/Solicitudes";
@@ -28,6 +29,10 @@ export const router = createBrowserRouter([
             {
                 path:'seguimiento-pedidos',
                 element:(<SeguimientoPedidos/>)
+            },
+            {
+                path:'cotizar',
+                element:(<CotizarInicio/>)
             },
             {
                 path:'cotizar/:categoria',

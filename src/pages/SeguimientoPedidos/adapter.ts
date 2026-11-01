@@ -90,5 +90,9 @@ export const pedidoToOrder = (p: PedidoDetalle, cliente: string, masReciente: bo
     issuedAt: p.fechaCotizacion ? formatDiaInstante(p.fechaCotizacion) : "—",
     dueAt: formatDia(p.fechaLimite),
     timeline: lineaDeTiempo(p),
+    items: p.productos.map((item) => ({ id: item.id, descripcion: item.descripcion, cantidad: item.cantidad, subtotal: item.subtotal })),
+    dueDate: p.fechaLimite,
+    comprobanteEnviado: p.comprobante ? formatFecha(p.comprobante.fecha) : null,
+    pagadoEl: p.fechaPago ? formatFecha(p.fechaPago) : null,
   }
 }

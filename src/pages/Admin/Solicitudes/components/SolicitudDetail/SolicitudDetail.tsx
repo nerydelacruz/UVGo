@@ -112,9 +112,10 @@ const SolicitudDetail = ({ pedido, cotizar, onCancelado, onPagado }: SolicitudDe
   const editable = esCotizable(pedido.estado)
   const web = pedido.productos.filter((p) => p.tipo === "WEB")
   const catalogo = pedido.productos.filter((p) => p.tipo === "CATALOGO")
-  const lista = pedido.productos.filter((p) => p.tipo === "LISTA" || p.tipo === "TEXTO")
+  const lista = pedido.productos.filter((p) => p.tipo === "LISTA")
 
-  const [tab, setTab] = useState<Tab>(lista.length > 0 ? "LISTA" : web.length > 0 ? "WEB" : "CATALOGO")
+  const texto = pedido.productos.filter((p) => p.tipo === "TEXTO")
+  const [tab, setTab] = useState<Tab>(lista.length > 0 ? "LISTA" : web.length > 0 ? "WEB" : catalogo.length > 0 ? "CATALOGO" : "TEXTO")
   const [precios, setPrecios] = useState<Record<string, string>>(() =>
     Object.fromEntries(pedido.productos.map((item) => [item.id, precioInicial(item)])),
   )
@@ -149,8 +150,9 @@ const SolicitudDetail = ({ pedido, cotizar, onCancelado, onPagado }: SolicitudDe
     { id: "WEB", label: "De la web", items: web },
     { id: "CATALOGO", label: "Del catálogo", items: catalogo },
     { id: "LISTA", label: "De una lista", items: lista },
+    ...(texto.length > 0 ? [{ id: "TEXTO" as const, label: "Del PDF", items: texto }] : []),
   ]
-  const visibles = tab === "LISTA" ? lista : tab === "WEB" ? web : catalogo
+  const visibles = tab === "LISTA" ? lista : tab === "WEB" ? web : tab === "TEXTO" ? texto : catalogo
 
   const renderItem = (item: ItemPedido) => {
     const monto = montos[item.id]
@@ -171,6 +173,12 @@ const SolicitudDetail = ({ pedido, cotizar, onCancelado, onPagado }: SolicitudDe
             <span>Cantidad: {item.cantidad} {item.unidad}</span>
             {item.tienda && <span>{item.tienda}</span>}
             {ref && <span>{ref}</span>}
+            {item.tipo === "TEXTO" && item.sugerenciaDescripcion && (
+              <span>
+                Posible coincidencia en stock: {item.sugerenciaDescripcion}
+                {item.sugerenciaPrecio !== null && ` (${formatPrecio(item.sugerenciaPrecio, item.sugerenciaMoneda)})`}
+              </span>
+            )}
             {item.tipo === "WEB" && item.url && (
               <a href={item.url} target="_blank" rel="noreferrer">
                 Ver producto <FiExternalLink size={12} aria-hidden />

@@ -1,5 +1,6 @@
 import styled from "@emotion/styled"
 import { motion } from "motion/react"
+import { Link } from "react-router-dom"
 
 export const Panel = styled(motion.aside)`
   display: flex;
@@ -82,5 +83,41 @@ export const Body = styled.div`
 
   &::-webkit-scrollbar {
     display: none;
+  }
+`
+
+export const Empty = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${(p) => p.theme.space.xs};
+  padding: ${(p) => p.theme.space.xl} ${(p) => p.theme.space.md};
+  text-align: center;
+  font-size: ${(p) => p.theme.font.size.sm};
+  color: ${(p) => p.theme.color.textMuted};
+
+  strong {
+    font-size: ${(p) => p.theme.font.size.md};
+    color: ${(p) => p.theme.color.textStrong};
+  }
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: ${(p) => p.theme.space.sm};
+    font-weight: ${(p) => p.theme.font.weight.semibold};
+    color: ${(p) => p.theme.color.accent};
+  }
+`
+
+export const SeeAll = styled(Link)`
+  align-self: center;
+  font-size: ${(p) => p.theme.font.size.xs};
+  font-weight: ${(p) => p.theme.font.weight.semibold};
+  color: ${(p) => p.theme.color.textMuted};
+
+  &:hover {
+    color: ${(p) => p.theme.color.accent};
   }
 `

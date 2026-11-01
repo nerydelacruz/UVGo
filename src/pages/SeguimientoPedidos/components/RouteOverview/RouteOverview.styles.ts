@@ -117,6 +117,39 @@ export const MotoPin = styled.span`
   }
 `
 
+// Moto 3D del repartidor (canvas de 42px); el halo pulsa bajo las ruedas, 9px debajo del centro
+export const Moto3dPin = styled.span`
+  position: relative;
+  display: block;
+  width: 4.2rem;
+  height: 4.2rem;
+  pointer-events: none;
+
+  canvas {
+    position: relative;
+    display: block;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: calc(50% + 0.9rem);
+    left: 50%;
+    width: 2.4rem;
+    height: 1.2rem;
+    border: 2px solid ${(p) => p.theme.color.accent};
+    border-radius: 50%;
+    background: rgba(224, 122, 95, 0.3);
+    transform: translate(-50%, -50%);
+    animation: moto3dPulse 1.8s ease-out infinite;
+  }
+
+  @keyframes moto3dPulse {
+    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+    80%, 100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+  }
+`
+
 export const TimeLabel = styled.span<{ dark?: boolean }>`
   position: relative;
   display: block;

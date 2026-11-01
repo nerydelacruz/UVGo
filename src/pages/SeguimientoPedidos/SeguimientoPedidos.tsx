@@ -6,8 +6,8 @@ import { esPedido, pedidoToOrder } from "./adapter"
 import OrderHistory from "./components/OrderHistory/OrderHistory"
 import OrdersPanel from "./components/OrdersPanel/OrdersPanel"
 import PaymentPanel from "./components/PaymentPanel/PaymentPanel"
-import RouteOverview from "./components/RouteOverview/RouteOverview"
-import { BottomStrip, EmptyCard, Main, Muted, Shell } from "./SeguimientoPedidos.styles"
+import ReceiptCard from "./components/ReceiptCard/ReceiptCard"
+import { EmptyCard, Main, Muted, Shell, TopRow } from "./SeguimientoPedidos.styles"
 
 const SeguimientoPedidos = () => {
   const navigate = useNavigate()
@@ -32,12 +32,13 @@ const SeguimientoPedidos = () => {
         onPagar={() => navigate("/mis-solicitudes")}
       />
       {selected ? (
+        // El estudiante no ve el mapa ni la ubicación del repartidor: eso es solo del panel admin
         <Main>
-          <RouteOverview order={selected} />
-          <BottomStrip>
-            <OrderHistory order={selected} />
-            <PaymentPanel order={selected} />
-          </BottomStrip>
+          <TopRow>
+            <ReceiptCard order={selected} />
+            <PaymentPanel order={selected} onPagar={() => navigate("/mis-solicitudes")} />
+          </TopRow>
+          <OrderHistory order={selected} />
         </Main>
       ) : (
         <Main>

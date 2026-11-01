@@ -96,7 +96,14 @@ const Solicitudes = () => {
           onSelect={seleccionar}
         />
 
-        {selected ? (
+        {selected?.verificandoStock ? (
+          <Panel>
+            <EmptyState>
+              <strong>Verificando productos en stock…</strong>
+              <p>Estamos comparando los materiales de {selected.curso} con el stock. Se abrirá sola en unos segundos.</p>
+            </EmptyState>
+          </Panel>
+        ) : selected ? (
           <SolicitudDetail
             key={`${selected.id}-${selected.version}`}
             pedido={selected}

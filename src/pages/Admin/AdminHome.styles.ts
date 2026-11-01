@@ -28,43 +28,42 @@ export const Title = styled.h1`
   text-wrap: balance;
 `
 
-export const Panel = styled.section`
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: ${(p) => p.theme.space.sm};
-  padding: ${(p) => p.theme.space.xxl} ${(p) => p.theme.space.lg};
-  border-radius: ${(p) => p.theme.radius.xl};
-  background: ${(p) => p.theme.color.surfaceMuted};
-  box-shadow: ${(p) => p.theme.shadow.md};
-  outline: 1px solid rgba(255, 255, 255, 0.6);
-  outline-offset: -1px;
-  backdrop-filter: blur(24px) saturate(1.5);
-  text-align: center;
+export const Nota = styled.p`
+  margin-top: ${(p) => p.theme.space.xs};
+  font-size: ${(p) => p.theme.font.size.xs};
+  color: ${(p) => p.theme.color.textFaint};
+`
 
-  strong {
-    font-size: ${(p) => p.theme.font.size.lg};
-    font-weight: ${(p) => p.theme.font.weight.semibold};
-    color: ${(p) => p.theme.color.textStrong};
+// Bento de 4 columnas en escritorio (la de pedidos y mapa es doble), 2 en tablet y 1 en móvil.
+// Cada columna apila sus tarjetas; la última de cada una se estira para que todas terminen a la misma altura.
+export const Bento = styled.div`
+  display: grid;
+  flex-shrink: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: ${(p) => p.theme.space.lg};
+
+  @media (max-width: 1280px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  p {
-    max-width: 36rem;
-    font-size: ${(p) => p.theme.font.size.sm};
-    color: ${(p) => p.theme.color.textFaint};
-    text-wrap: pretty;
+  @media (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 `
 
-export const IconBadge = styled.span`
-  display: grid;
-  place-items: center;
-  width: 5.6rem;
-  height: 5.6rem;
-  margin-bottom: ${(p) => p.theme.space.sm};
-  border-radius: ${(p) => p.theme.radius.full};
-  color: ${(p) => p.theme.color.accent};
-  background: rgba(224, 122, 95, 0.16);
+export const Columna = styled.div<{ ancha?: boolean }>`
+  display: flex;
+  flex-direction: column;
+  gap: ${(p) => p.theme.space.lg};
+  min-width: 0;
+
+  /* En tablet la columna de pedidos y mapa va primero y ocupa todo el ancho */
+  @media (max-width: 1280px) {
+    order: ${(p) => (p.ancha ? -1 : 0)};
+    grid-column: ${(p) => (p.ancha ? "1 / -1" : "auto")};
+  }
+
+  @media (max-width: 640px) {
+    grid-column: auto;
+  }
 `

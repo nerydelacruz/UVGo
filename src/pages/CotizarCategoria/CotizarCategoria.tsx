@@ -1,10 +1,11 @@
 import { useState } from "react"
-import { FiArrowRight } from "react-icons/fi"
-import { useParams } from "react-router-dom"
+import { FiArrowRight, FiFileText } from "react-icons/fi"
+import { useLocation, useParams } from "react-router-dom"
 import { CATEGORIAS, isCategoria, type Categoria } from "@/models/categoria.model"
 import { useAuthStore } from "@/store/auth.store"
 import CrearSolicitudDialog from "./components/CrearSolicitudDialog/CrearSolicitudDialog"
 import ExternalSearchPanel from "./components/ExternalSearchPanel/ExternalSearchPanel"
+import ImportarMateriales from "./components/ImportarMateriales/ImportarMateriales"
 import StockPanel from "./components/StockPanel/StockPanel"
 import {
   EmptyState,
@@ -22,6 +23,7 @@ import {
   Tabs,
   Title,
 } from "./CotizarCategoria.styles"
+import type { MaterialImportado } from "./materiales"
 import { useSeleccion } from "./useSeleccion"
 
 const plural = (count: number, singular: string, pluralForm: string) => `${count} ${count === 1 ? singular : pluralForm}`
@@ -30,14 +32,21 @@ const CotizarCategoria = () => {
   const { categoria } = useParams()
 
   // La selección se conserva al cambiar de categoría: un pedido puede mezclar varias
-  const seleccion = useSeleccion()
-  const [dialogOpen, setDialogOpen] = useState(false)
+  // Los materiales importados desde un PDF se suman como ítems de texto (pueden venir ya importados
+  // desde la pantalla inicial de Cotizar)
+  const location = useLocation()
+  const materialesIniciales = (location.state as { materiales?: MaterialImportado[] } | null)?.materiales
+  const seleccion = useSeleccion(materialesIniciales)
+  // Al importar un PDF el pedido ya está armado: se abre directo la solicitud de cotización
+  const [dialogOpen, setDialogOpen] = useState(() => (materialesIniciales?.length ?? 0) > 0)
+  const [importOpen, setImportOpen] = useState(false)
   // Solo los estudiantes crean solicitudes; el admin puede ver esta pantalla desde "Vista usuario"
   const esEstudiante = useAuthStore((s) => s.usuario?.rol === "ESTUDIANTE")
 
   const total = seleccion.items.length
   const deStock = seleccion.stockIds.size
-  const externos = total - deStock
+  const delPdf = seleccion.textoCount
+  const externos = total - deStock - delPdf
 
   const tabs = (
     <Tabs aria-label="Categorías">
@@ -96,10 +105,15 @@ const CotizarCategoria = () => {
             <>
               <strong>{plural(total, "producto", "productos")}</strong> para cotizar ·{" "}
               {plural(deStock, "de stock", "de stock")} · {plural(externos, "externo", "externos")}
+              {delPdf > 0 && <> · {plural(delPdf, "del PDF", "del PDF")}</>}
             </>
           )}
         </SelectionSummary>
         <SelectionActions>
+          <GhostButton type="button" onClick={() => setImportOpen(true)}>
+            <FiFileText size={14} aria-hidden />
+            Importar desde PDF
+          </GhostButton>
           <GhostButton type="button" disabled={total === 0} onClick={seleccion.limpiar}>
             Limpiar
           </GhostButton>
@@ -122,6 +136,15 @@ const CotizarCategoria = () => {
         onQuitar={seleccion.quitar}
         onCreada={seleccion.limpiar}
         onClose={() => setDialogOpen(false)}
+      />
+
+      <ImportarMateriales
+        open={importOpen}
+        onAdd={(nuevos) => {
+          seleccion.agregarMateriales(nuevos)
+          setDialogOpen(true)
+        }}
+        onClose={() => setImportOpen(false)}
       />
     </Page>
   )

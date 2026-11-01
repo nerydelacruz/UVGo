@@ -1,4 +1,5 @@
 import styled from "@emotion/styled"
+import { Link } from "react-router-dom"
 
 export const Row = styled.div`
   display: grid;
@@ -10,7 +11,8 @@ export const Row = styled.div`
   }
 `
 
-export const Card = styled.div`
+// Toda la tarjeta es un enlace: se eleva un poco al pasar el cursor
+export const Card = styled(Link)`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -21,6 +23,20 @@ export const Card = styled.div`
   backdrop-filter: blur(24px);
   box-shadow: ${(p) => p.theme.shadow.md};
   padding: ${(p) => p.theme.space.lg};
+  color: inherit;
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.75);
+    box-shadow: 0 12px 24px -14px rgb(16 24 16 / 0.35);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(224, 122, 95, 0.4);
+    outline-offset: 2px;
+  }
 `
 
 export const Info = styled.div`
@@ -44,11 +60,15 @@ export const Label = styled.p`
   text-overflow: ellipsis;
 `
 
-export const Delta = styled.p`
+// Detalle bajo la cifra; coral cuando pide una acción al estudiante
+export const Delta = styled.p<{ warn?: boolean }>`
   margin-top: ${(p) => p.theme.space.sm};
   font-size: ${(p) => p.theme.font.size.xs};
   font-weight: ${(p) => p.theme.font.weight.semibold};
-  color: ${(p) => p.theme.color.addAction};
+  color: ${(p) => (p.warn ? p.theme.color.accent : p.theme.color.addAction)};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `
 
 export const Icon = styled.div<{ tone: "warning" | "primary" | "accent" }>`

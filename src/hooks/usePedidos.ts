@@ -18,6 +18,8 @@ export const usePedidos = (estado?: EstadoPedido) =>
   useQuery({
     queryKey: ['pedidos', estado ?? 'todos'],
     queryFn: () => listarPedidos({ estado, tamanio: TAMANIO }),
+    // Mientras alguna solicitud se compara con el stock se consulta cada 3 s hasta que termine
+    refetchInterval: (query) => (query.state.data?.contenido.some((p) => p.verificandoStock) ? 3000 : false),
   })
 
 export const useCrearSolicitud = () => {
