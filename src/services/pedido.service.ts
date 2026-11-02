@@ -1,4 +1,5 @@
 import { api } from './api'
+import type { Ubicacion } from '@/models/ubicacion.model'
 import type { CotizacionRequest, EstadoPedido, Pagina, PedidoDetalle, SolicitudRequest } from '@/models/pedido.model'
 
 export const obtenerSolicitud = async (id: string): Promise<PedidoDetalle> => {
@@ -55,4 +56,10 @@ export const registrarPago = async (pedidoId: string, version: number): Promise<
 export const aceptarPedido = async (pedidoId: string, version: number): Promise<PedidoDetalle> => {
   const { data } = await api.post<PedidoDetalle>(`/api/v1/pedidos/${pedidoId}/aceptacion`, { version })
   return data
+}
+
+// Última posición conocida del repartidor (solo admin); null si todavía no ha publicado ninguna
+export const obtenerUbicacion = async (pedidoId: string): Promise<Ubicacion | null> => {
+  const { data, status } = await api.get<Ubicacion>(`/api/v1/pedidos/${pedidoId}/ubicacion`)
+  return status === 204 ? null : data
 }

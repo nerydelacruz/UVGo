@@ -16,7 +16,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/uvgo': 'http://localhost:8070',
+      '/uvgo': { target: 'http://localhost:8070', ws: true },
     },
   },
 })

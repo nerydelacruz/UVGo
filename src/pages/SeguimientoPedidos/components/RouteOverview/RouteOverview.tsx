@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { FiBox, FiCrosshair, FiInfo, FiLayers, FiMap, FiMaximize2, FiMinimize2, FiMinus, FiPlus, FiX } from "react-icons/fi"
 import { MdDeliveryDining } from "react-icons/md"
 import { routeProgress, statusLabel, warehouse, type Order } from "../../data"
 import { CardTitle, Muted, SquareButton } from "../../SeguimientoPedidos.styles"
 import DeliveryMap, { type DeliveryMapHandle, type MapStyle, type RouteInfo } from "./DeliveryMap"
 import { SIMULAR_REPARTIDOR } from "./simulacion"
+import { useUbicacionRepartidor } from "@/hooks/useUbicacionRepartidor"
 import {
   AlertChip,
   AlertRow,
@@ -53,9 +54,17 @@ const RouteOverview = ({ order, className, titleExtra, footer }: RouteOverviewPr
   const [panelOpen, setPanelOpen] = useState(true)
   const [routeInfo, setRouteInfo] = useState<{ id: string; info: RouteInfo } | null>(null)
 
+  // Posición real del repartidor por WebSocket (este mapa es solo del panel admin)
+  const { ubicacion } = useUbicacionRepartidor(order.id)
+  const livePosition = useMemo(
+    () => (ubicacion ? { lng: ubicacion.longitud, lat: ubicacion.latitud, heading: ubicacion.rumbo } : null),
+    [ubicacion],
+  )
+
   const isLive = order.status === "en-ruta"
-  // Solo hay repartidor que centrar si va en ruta (o si la moto está en simulación)
-  const motoVisible = isLive || SIMULAR_REPARTIDOR
+  const enVivo = isLive || !!ubicacion
+  // Solo hay repartidor que centrar si va en ruta, si hay posición en vivo (o si la moto está en simulación)
+  const motoVisible = enVivo || SIMULAR_REPARTIDOR
   const info = routeInfo?.id === order.id ? routeInfo.info : null
   const distanceKm = info?.distanceKm ?? order.distanceKm
   const etaMin = Math.max(order.etaMin, Math.round(info?.durationMin ?? 0))
@@ -152,6 +161,7 @@ const RouteOverview = ({ order, className, titleExtra, footer }: RouteOverviewPr
           origin={warehouse.coords}
           destination={order.destinationCoords}
           progress={routeProgress(order.status)}
+          livePosition={livePosition}
           remainingLabel={isLive ? `${order.etaMin} min restantes` : undefined}
           arrivalLabel={arrivalLabel}
           mapStyle={mapStyle}
@@ -162,8 +172,8 @@ const RouteOverview = ({ order, className, titleExtra, footer }: RouteOverviewPr
           onUserMove={() => setView("free")}
         />
 
-        <LiveBadge live={isLive}>
-          <LiveDot live={isLive} /> {isLive ? "En vivo · hace 1 min" : statusLabel[order.status]}
+        <LiveBadge live={enVivo}>
+          <LiveDot live={enVivo} /> {ubicacion ? "En vivo" : isLive ? "En vivo · hace 1 min" : statusLabel[order.status]}
         </LiveBadge>
 
         {panelOpen ? (
