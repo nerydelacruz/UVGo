@@ -3,6 +3,7 @@ import { usePedidos } from "@/hooks/usePedidos"
 import { esPedido, pedidoToOrder } from "@/pages/SeguimientoPedidos/adapter"
 import { resumirPedidos } from "@/utilities/resumenPedidos"
 import ActividadSemanal from "./components/ActividadSemanal/ActividadSemanal"
+import ConductorPedido from "./components/ConductorPedido/ConductorPedido"
 import CobrosSemana from "./components/CobrosSemana/CobrosSemana"
 import EquipoEntrega from "./components/EquipoEntrega/EquipoEntrega"
 import HorarioSolicitudes from "./components/HorarioSolicitudes/HorarioSolicitudes"
@@ -55,6 +56,7 @@ const AdminHome = () => {
 
         <Columna>
           <PedidoSeleccionado pedido={seleccionado?.pedido} order={seleccionado?.order} estado={estado} />
+          <ConductorPedido pedido={seleccionado?.pedido} estado={estado} />
           <ProductosPedido pedido={seleccionado?.pedido} estado={estado} />
         </Columna>
 

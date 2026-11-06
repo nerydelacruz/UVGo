@@ -86,6 +86,14 @@ export interface PedidoDetalle {
   fechaPago: string | null
   // El sistema aún compara los materiales del PDF con el stock; los ítems pueden cambiar en unos segundos
   verificandoStock: boolean
+  // Conductor que entrega el pedido; null mientras no se asigne
+  piloto: Piloto | null
+}
+
+// Conductor disponible para asignar a un pedido (GET /api/v1/pilotos)
+export interface Piloto {
+  id: string
+  nombre: string
 }
 
 // Límites del backend
@@ -123,6 +131,10 @@ export const ESTADOS: Record<EstadoPedido, string> = {
 
 // Confirmado y sin pago validado: el estudiante puede subir o reemplazar el comprobante
 export const esperaComprobante = (pedido: PedidoDetalle) => pedido.estado === "CONFIRMADO"
+
+// Un pedido confirmado que todavía no se entrega admite conductor (el backend lo exige igual)
+export const admitePiloto = (estado: EstadoPedido) =>
+  estado === "CONFIRMADO" || estado === "PAGADO" || estado === "EN_COMPRA" || estado === "LISTO"
 
 // Mientras el estudiante no acepte, el admin puede cotizar o corregir la cotización
 export const esCotizable = (estado: EstadoPedido) => estado === "SOLICITADO" || estado === "COTIZADO"

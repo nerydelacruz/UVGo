@@ -19,6 +19,13 @@ export interface DeliveryMapHandle {
   resize: () => void
 }
 
+/** Posición en vivo del repartidor (p. ej. por WebSocket); el rumbo va en grados de brújula */
+export interface LivePosition {
+  lng: number
+  lat: number
+  heading?: number | null
+}
+
 export interface RouteInfo {
   distanceKm: number
   durationMin: number
@@ -29,6 +36,8 @@ interface DeliveryMapProps {
   destination: LngLat
   /** Fracción de la ruta recorrida por el repartidor (0–1) */
   progress: number
+  /** Posición real del repartidor: si llega, la moto la sigue en lugar de avanzar por `progress` */
+  livePosition?: LivePosition | null
   remainingLabel?: string
   arrivalLabel: string
   mapStyle: MapStyle
@@ -53,6 +62,11 @@ const styleUrl: Record<MapStyle, string> = {
   light: "mapbox://styles/mapbox/light-v11",
   streets: "mapbox://styles/mapbox/streets-v12",
 }
+
+// La moto se desliza hasta cada posición nueva en este tiempo (un poco más que el ritmo de llegada)
+const LIVE_TWEEN_MS = 1000
+// Puntos que se conservan del recorrido en vivo
+const LIVE_PATH_MAX = 2000
 
 const SIMULACION_MS = 30000
 const SIMULACION_PAUSA_MS = 2000
@@ -128,6 +142,7 @@ const DeliveryMap = ({
   origin,
   destination,
   progress,
+  livePosition,
   remainingLabel,
   arrivalLabel,
   mapStyle,
@@ -148,6 +163,9 @@ const DeliveryMap = ({
   const insetRef = useRef(rightInset)
   const bottomInsetRef = useRef(bottomInset)
   const callbacks = useRef({ onRoute, onUserMove })
+  const liveRef = useRef<LivePosition | null>(livePosition ?? null)
+  // Lo registra el efecto que crea el mapa: mueve la moto a una posición en vivo sin recrear nada
+  const moveLiveRef = useRef<((position: LivePosition) => void) | null>(null)
   const [elements] = useState(() => ({
     origin: document.createElement("div"),
     destination: document.createElement("div"),
@@ -163,6 +181,12 @@ const DeliveryMap = ({
     insetRef.current = rightInset
     bottomInsetRef.current = bottomInset
   })
+
+  // Una posición nueva solo mueve la moto: el efecto que crea el mapa no depende de ella
+  useEffect(() => {
+    liveRef.current = livePosition ?? null
+    if (livePosition) moveLiveRef.current?.(livePosition)
+  }, [livePosition])
 
   const showMotoMarker = SIMULAR_REPARTIDOR || (progress > 0 && progress < 1)
 
@@ -221,6 +245,7 @@ const DeliveryMap = ({
     map.on("rotate", syncMotoView)
     map.on("pitch", syncMotoView)
     const remaining = new mapboxgl.Marker({ element: elements.remaining, anchor: "bottom", offset: [0, -10] })
+    let motoOnMap = false
 
     // Relieve (DEM) y edificios extruidos; se activan o apagan según is3dRef
     const apply3d = (target: mapboxgl.Map) => {
@@ -268,6 +293,38 @@ const DeliveryMap = ({
 
     let frame = 0
     let cancelled = false
+    let ready = false
+    const livePath: LngLat[] = []
+
+    // Posición en vivo: la moto se desliza hasta el punto nuevo y el tramo recorrido es el camino real
+    const moveLive = (position: LivePosition) => {
+      if (!ready) return
+      cancelAnimationFrame(frame) // corta la animación por progreso o el deslizamiento anterior
+      const to: LngLat = [position.lng, position.lat]
+      const from = motoOnMap ? motoRef.current : to
+      if (!motoOnMap) {
+        moto.setLngLat(to).addTo(map)
+        motoOnMap = true
+      }
+      remaining.remove()
+      const heading = position.heading ?? (distance(from, to) > 1e-9 ? bearing(from, to) : null)
+      if (heading !== null) motoModel?.setHeading(heading)
+      livePath.push(to)
+      if (livePath.length > LIVE_PATH_MAX) livePath.shift()
+      traveledRef.current = [...livePath]
+      ;(map.getSource("traveled") as mapboxgl.GeoJSONSource | undefined)?.setData(lineFeature(livePath))
+
+      const start = performance.now()
+      const tick = (now: number) => {
+        const t = Math.min((now - start) / LIVE_TWEEN_MS, 1)
+        const point: LngLat = [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t]
+        motoRef.current = point
+        moto.setLngLat(point)
+        if (t < 1) frame = requestAnimationFrame(tick)
+      }
+      frame = requestAnimationFrame(tick)
+    }
+    moveLiveRef.current = moveLive
 
     map.once("load", async () => {
       const { line, info } = await fetchRoute(origin, destination)
@@ -277,10 +334,19 @@ const DeliveryMap = ({
       ;(map.getSource("route") as mapboxgl.GeoJSONSource | undefined)?.setData(lineFeature(line))
       fitRoute(0)
 
+      ready = true
+      if (liveRef.current) {
+        moveLive(liveRef.current)
+        return
+      }
+
       if (remainingLabel && showMotoMarker && !SIMULAR_REPARTIDOR) {
         remaining.setLngLat(splitLine(line, progress + (1 - progress) / 2).point).addTo(map)
       }
-      if (showMotoMarker) moto.setLngLat(origin).addTo(map)
+      if (showMotoMarker) {
+        moto.setLngLat(origin).addTo(map)
+        motoOnMap = true
+      }
 
       const start = performance.now()
       const step = (now: number) => {
@@ -307,6 +373,7 @@ const DeliveryMap = ({
 
     return () => {
       cancelled = true
+      moveLiveRef.current = null
       cancelAnimationFrame(frame)
       motoModel?.dispose()
       mapRef.current = null

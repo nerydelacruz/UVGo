@@ -12,10 +12,11 @@ interface EquipoEntregaProps {
 }
 
 // Carga de trabajo de entregas: cuántos pedidos aceptados faltan por entregar y cuántos km suman sus rutas
-// desde la bodega (la misma estimación que usa Seguimiento de pedidos). El backend aún no asigna repartidor.
+// desde la bodega (la misma estimación que usa Seguimiento de pedidos), y a cuántos aún les falta conductor.
 const EquipoEntrega = ({ resumen, orders, estado }: EquipoEntregaProps) => {
   const pendientes = orders.filter((o) => o.status !== "entregado")
   const km = pendientes.reduce((total, o) => total + o.distanceKm, 0)
+  const sinConductor = pendientes.filter((o) => !o.conductor).length
 
   return (
     <DashboardCard titulo="Entregas" estado={estado} esqueleto={["6.8rem", "10rem"]}>
@@ -25,7 +26,9 @@ const EquipoEntrega = ({ resumen, orders, estado }: EquipoEntregaProps) => {
         </Avatar>
         <div>
           <strong>{warehouse.name}</strong>
-          <span>Salida · repartidor por asignar</span>
+          <span>
+            Salida · {sinConductor === 0 ? "todos con conductor" : `${sinConductor} por asignar`}
+          </span>
         </div>
       </Encabezado>
 

@@ -94,5 +94,6 @@ export const pedidoToOrder = (p: PedidoDetalle, cliente: string, masReciente: bo
     dueDate: p.fechaLimite,
     comprobanteEnviado: p.comprobante ? formatFecha(p.comprobante.fecha) : null,
     pagadoEl: p.fechaPago ? formatFecha(p.fechaPago) : null,
+    conductor: p.piloto?.nombre ?? null,
   }
 }

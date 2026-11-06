@@ -1,14 +1,16 @@
 import { useState } from "react"
-import { FiCheckCircle } from "react-icons/fi"
+import { FiCheckCircle, FiRefreshCw } from "react-icons/fi"
 import { useCotizarPedido, usePedidos } from "@/hooks/usePedidos"
 import SolicitudDetail from "./components/SolicitudDetail/SolicitudDetail"
 import SolicitudList from "@/components/SolicitudList/SolicitudList"
 import { FILTROS } from "@/utilities/estadoPedido"
 import {
   Aviso,
+  CargarButton,
   EmptyState,
   Eyebrow,
   Header,
+  HeaderActions,
   Page,
   Panel,
   SegmentButton,
@@ -20,7 +22,7 @@ import {
 const Solicitudes = () => {
   const [filtro, setFiltro] = useState(0)
   const { estado, label } = FILTROS[filtro]
-  const { data, isLoading, isError, refetch } = usePedidos(estado)
+  const { data, isLoading, isError, isFetching, refetch } = usePedidos(estado)
   const solicitudes = data?.contenido ?? []
 
   const [selectedId, setSelectedId] = useState<string>()
@@ -60,20 +62,26 @@ const Solicitudes = () => {
           <Eyebrow>Vista admin</Eyebrow>
           <Title>Solicitudes</Title>
         </div>
-        <Segmented role="tablist" aria-label="Filtrar por estado">
-          {FILTROS.map((f, i) => (
-            <SegmentButton
-              key={f.label}
-              type="button"
-              role="tab"
-              aria-selected={filtro === i}
-              selected={filtro === i}
-              onClick={() => cambiarFiltro(i)}
-            >
-              {f.label}
-            </SegmentButton>
-          ))}
-        </Segmented>
+        <HeaderActions>
+          <Segmented role="tablist" aria-label="Filtrar por estado">
+            {FILTROS.map((f, i) => (
+              <SegmentButton
+                key={f.label}
+                type="button"
+                role="tab"
+                aria-selected={filtro === i}
+                selected={filtro === i}
+                onClick={() => cambiarFiltro(i)}
+              >
+                {f.label}
+              </SegmentButton>
+            ))}
+          </Segmented>
+          <CargarButton type="button" disabled={isFetching} onClick={() => refetch()}>
+            <FiRefreshCw size={16} aria-hidden data-cargando={isFetching} />
+            {isFetching ? "Cargando…" : "Cargar datos"}
+          </CargarButton>
+        </HeaderActions>
       </Header>
 
       {aviso && (

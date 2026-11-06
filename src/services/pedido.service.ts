@@ -1,5 +1,6 @@
 import { api } from './api'
-import type { CotizacionRequest, EstadoPedido, Pagina, PedidoDetalle, SolicitudRequest } from '@/models/pedido.model'
+import type { Ubicacion } from '@/models/ubicacion.model'
+import type { CotizacionRequest, EstadoPedido, Pagina, PedidoDetalle, Piloto, SolicitudRequest } from '@/models/pedido.model'
 
 // El estudiante pide una cotización; el backend guarda una copia de cada producto
 export const crearSolicitud = async (solicitud: SolicitudRequest): Promise<PedidoDetalle> => {
@@ -49,5 +50,28 @@ export const registrarPago = async (pedidoId: string, version: number): Promise<
 // El estudiante acepta la cotización: la solicitud pasa a CONFIRMADO (ya es un pedido)
 export const aceptarPedido = async (pedidoId: string, version: number): Promise<PedidoDetalle> => {
   const { data } = await api.post<PedidoDetalle>(`/api/v1/pedidos/${pedidoId}/aceptacion`, { version })
+  return data
+}
+
+// Última posición conocida del repartidor (solo admin); null si todavía no ha publicado ninguna
+export const obtenerUbicacion = async (pedidoId: string): Promise<Ubicacion | null> => {
+  const { data, status } = await api.get<Ubicacion>(`/api/v1/pedidos/${pedidoId}/ubicacion`)
+  return status === 204 ? null : data
+}
+
+// Conductores que se pueden asignar a un pedido (solo admin)
+export const listarPilotos = async (): Promise<Piloto[]> => {
+  const { data } = await api.get<Piloto[]>('/api/v1/pilotos')
+  return data
+}
+
+// Asigna (o cambia) el conductor; el conductor lo recibe al instante por WebSocket
+export const asignarPiloto = async (pedidoId: string, version: number, pilotoId: string): Promise<PedidoDetalle> => {
+  const { data } = await api.post<PedidoDetalle>(`/api/v1/pedidos/${pedidoId}/piloto`, { version, pilotoId })
+  return data
+}
+
+export const quitarPiloto = async (pedidoId: string, version: number): Promise<PedidoDetalle> => {
+  const { data } = await api.delete<PedidoDetalle>(`/api/v1/pedidos/${pedidoId}/piloto`, { params: { version } })
   return data
 }

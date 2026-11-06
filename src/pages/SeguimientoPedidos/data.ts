@@ -41,6 +41,7 @@ export interface Order {
   dueDate: string // yyyy-mm-dd, para la cuenta regresiva
   comprobanteEnviado: string | null // cuándo subió el estudiante el comprobante
   pagadoEl: string | null // cuándo validó el pago el administrador
+  conductor: string | null // nombre del piloto asignado; null si aún no tiene
 }
 
 export interface OrderItem {
