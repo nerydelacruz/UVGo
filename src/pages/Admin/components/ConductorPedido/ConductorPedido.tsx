@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react"
-import { FiAlertCircle } from "react-icons/fi"
+import { FiAlertCircle, FiUserPlus } from "react-icons/fi"
 import { MdDeliveryDining } from "react-icons/md"
 import { useAsignarPiloto, usePilotos, useQuitarPiloto } from "@/hooks/usePilotos"
 import { admitePiloto, type PedidoDetalle } from "@/models/pedido.model"
@@ -7,6 +7,7 @@ import { ErrorText, GhostButton, PrimaryButton } from "@/styles/shared.styles"
 import { getErrorMessage } from "@/utilities/apiError"
 import DashboardCard, { type EstadoCarga } from "../DashboardCard/DashboardCard"
 import { Acciones, Actual, Avatar, Formulario, Nota, Selector } from "./ConductorPedido.styles"
+import NuevoConductorDialog from "./NuevoConductorDialog"
 
 interface ConductorPedidoProps {
   pedido: PedidoDetalle | undefined
@@ -23,6 +24,7 @@ const Contenido = ({ pedido }: FormProps) => {
   const asignar = useAsignarPiloto()
   const quitar = useQuitarPiloto()
   const [elegido, setElegido] = useState(pedido.piloto?.id ?? "")
+  const [creando, setCreando] = useState(false)
 
   const lista = pilotos.data ?? []
   const ocupado = asignar.isPending || quitar.isPending
@@ -81,6 +83,10 @@ const Contenido = ({ pedido }: FormProps) => {
               </GhostButton>
             )}
           </Acciones>
+          <GhostButton type="button" disabled={ocupado} onClick={() => setCreando(true)}>
+            <FiUserPlus size={14} aria-hidden />
+            Nuevo conductor
+          </GhostButton>
           {pilotos.isError && (
             <ErrorText role="alert">
               <FiAlertCircle size={14} aria-hidden />
@@ -105,8 +111,10 @@ const Contenido = ({ pedido }: FormProps) => {
         </Nota>
       )}
       {pedido.piloto && admitePiloto(pedido.estado) && (
-        <Nota>{pedido.piloto.nombre} recibe el pedido al instante en su simulador y su posición aparece en el mapa.</Nota>
+        <Nota>{pedido.piloto.nombre} recibe el pedido al instante en la app de UVGo y su posición aparece en el mapa.</Nota>
       )}
+      {/* El conductor recién creado queda elegido en el selector, listo para asignarlo */}
+      <NuevoConductorDialog open={creando} onClose={() => setCreando(false)} onCreado={(piloto) => setElegido(piloto.id)} />
     </>
   )
 }

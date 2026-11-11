@@ -96,6 +96,14 @@ export interface Piloto {
   nombre: string
 }
 
+// Alta de la cuenta de un conductor por el admin (POST /api/v1/pilotos). Luego entra a la app móvil con ese correo.
+export interface PilotoNuevo {
+  nombre: string
+  correo: string
+  telefono: string
+  contrasena: string
+}
+
 // Límites del backend
 export const CANTIDAD_MIN = 1
 export const CANTIDAD_MAX = 999

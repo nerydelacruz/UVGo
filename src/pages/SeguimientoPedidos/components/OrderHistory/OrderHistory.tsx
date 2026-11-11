@@ -23,7 +23,8 @@ const pendingEntry = (phase: OrderStatus, order: Order): TimelineEntry => ({
   time: "—",
   location: phase === "en-ruta" ? `${order.origin} → ${order.destination}` : phase === "entregado" ? order.destination : "—",
   action: phase === "en-ruta" ? "Sale a entregar" : phase === "entregado" ? "Entrega al estudiante" : "—",
-  detail: "Pendiente",
+  // Con repartidor asignado, la fase "En ruta" ya dice quién lo lleva
+  detail: phase === "en-ruta" && order.conductor ? `Repartidor asignado: ${order.conductor}` : "Pendiente",
 })
 
 const OrderHistory = ({ order }: { order: Order }) => {

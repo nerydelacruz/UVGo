@@ -62,6 +62,9 @@ const ReceiptCard = ({ order }: { order: Order }) => {
           <div><dt>Cliente</dt><dd title={order.cliente}>{order.cliente}</dd></div>
           <div><dt>Entrega</dt><dd>{order.destination === "Por definir" ? "Por definir" : order.destination}</dd></div>
           <div><dt>Solicitado</dt><dd>{order.requestedAt}</dd></div>
+          {/* Quién lo entrega: aparece en cuanto el administrador asigna un repartidor */}
+          <div><dt>Repartidor</dt><dd title={order.conductor ?? undefined}>{order.conductor ?? (order.status === "entregado" ? "Equipo UVGo" : "Por asignar")}</dd></div>
+          <div><dt>Entrega estimada</dt><dd>{order.deliveryAt}</dd></div>
         </Facts>
 
         <Products>

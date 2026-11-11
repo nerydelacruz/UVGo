@@ -1,6 +1,6 @@
 import { api } from './api'
 import type { Ubicacion } from '@/models/ubicacion.model'
-import type { CotizacionRequest, EstadoPedido, Pagina, PedidoDetalle, Piloto, SolicitudRequest } from '@/models/pedido.model'
+import type { CotizacionRequest, EstadoPedido, Pagina, PedidoDetalle, Piloto, PilotoNuevo, SolicitudRequest } from '@/models/pedido.model'
 
 // El estudiante pide una cotización; el backend guarda una copia de cada producto
 export const crearSolicitud = async (solicitud: SolicitudRequest): Promise<PedidoDetalle> => {
@@ -65,7 +65,13 @@ export const listarPilotos = async (): Promise<Piloto[]> => {
   return data
 }
 
-// Asigna (o cambia) el conductor; el conductor lo recibe al instante por WebSocket
+// Crea la cuenta de un conductor (solo admin); el conductor inicia sesión en la app móvil
+export const crearPiloto = async (datos: PilotoNuevo): Promise<Piloto> => {
+  const { data } = await api.post<Piloto>('/api/v1/pilotos', datos)
+  return data
+}
+
+// Asigna (o cambia) el conductor; el conductor lo recibe al instante en la app móvil
 export const asignarPiloto = async (pedidoId: string, version: number, pilotoId: string): Promise<PedidoDetalle> => {
   const { data } = await api.post<PedidoDetalle>(`/api/v1/pedidos/${pedidoId}/piloto`, { version, pilotoId })
   return data

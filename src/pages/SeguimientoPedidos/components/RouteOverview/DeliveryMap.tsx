@@ -5,7 +5,7 @@ import "mapbox-gl/dist/mapbox-gl.css"
 import { FiFlag, FiHome } from "react-icons/fi"
 import { MdDeliveryDining } from "react-icons/md"
 import type { LngLat } from "../../data"
-import { createMotoMarker3d } from "./motoMarker3d"
+import { createMotoMarker3d, SIZE_PX as MOTO_3D_PX } from "./motoMarker3d"
 import { SIMULAR_REPARTIDOR } from "./simulacion"
 import { MapContainer, MapFallback, MapPin, Moto3dPin, MotoPin, TimeLabel } from "./RouteOverview.styles"
 
@@ -72,7 +72,11 @@ const SIMULACION_MS = 30000
 const SIMULACION_PAUSA_MS = 2000
 
 // Desplazamiento del marcador 3D para que las ruedas (no el centro del canvas) queden sobre la ruta
-const MOTO_3D_OFFSET: [number, number] = [0, -9]
+const MOTO_3D_OFFSET: [number, number] = [0, -12]
+// La moto 3D mide MOTO_3D_PX a zoom 15 y crece al acercarse (sin pasar de estos límites)
+const MOTO_3D_MIN_PX = 44
+const MOTO_3D_MAX_PX = 150
+const motoPx = (zoom: number) => Math.round(Math.min(Math.max(MOTO_3D_PX * Math.pow(2, (zoom - 15) * 0.55), MOTO_3D_MIN_PX), MOTO_3D_MAX_PX))
 
 const supportsWebGL = () => {
   try {
@@ -195,6 +199,8 @@ const DeliveryMap = ({
     const line = lineRef.current
     if (!map) return
     const bounds = line.reduce((b, point) => b.extend(point), new mapboxgl.LngLatBounds(line[0], line[0]))
+    // Con posición en vivo, el repartidor también entra en el encuadre aunque esté lejos de la ruta
+    if (liveRef.current) bounds.extend([liveRef.current.lng, liveRef.current.lat])
     const { clientWidth, clientHeight } = map.getContainer()
     const right = clientWidth > 640 ? insetRef.current + 40 : 40
     const bottom = 60 + bottomInsetRef.current
@@ -237,13 +243,27 @@ const DeliveryMap = ({
     new mapboxgl.Marker({ element: elements.origin }).setLngLat(origin).addTo(map)
     new mapboxgl.Marker({ element: elements.destination, anchor: "bottom" }).setLngLat(destination).addTo(map)
     new mapboxgl.Marker({ element: elements.arrival, anchor: "bottom", offset: [0, -42] }).setLngLat(destination).addTo(map)
-    const moto = new mapboxgl.Marker({ element: elements.moto, offset: moto3d ? MOTO_3D_OFFSET : undefined })
+    // occludedOpacity: 1 → con relieve 3D Mapbox atenúa los marcadores que cree "tapados" por el terreno; la moto siempre se ve entera
+    const moto = new mapboxgl.Marker({ element: elements.moto, offset: moto3d ? MOTO_3D_OFFSET : undefined, occludedOpacity: 1 })
+    elements.moto.classList.add("uvgo-moto")
     // La moto 3D gira con la ruta y con la cámara del mapa (rotación e inclinación)
     const motoModel = moto3d && motoHostRef.current ? createMotoMarker3d(motoHostRef.current) : null
     const syncMotoView = () => motoModel?.setView(map.getBearing(), map.getPitch())
     syncMotoView()
     map.on("rotate", syncMotoView)
     map.on("pitch", syncMotoView)
+    // Al acercar el mapa la moto crece, en vez de quedarse del mismo tamaño en pantalla
+    let motoSize = 0
+    const syncMotoSize = () => {
+      if (!motoModel) return
+      const px = motoPx(map.getZoom())
+      if (px === motoSize) return
+      motoSize = px
+      motoModel.setSize(px)
+      moto.setOffset([MOTO_3D_OFFSET[0], (MOTO_3D_OFFSET[1] * px) / MOTO_3D_PX])
+    }
+    syncMotoSize()
+    map.on("zoom", syncMotoSize)
     const remaining = new mapboxgl.Marker({ element: elements.remaining, anchor: "bottom", offset: [0, -10] })
     let motoOnMap = false
 
@@ -302,7 +322,8 @@ const DeliveryMap = ({
       cancelAnimationFrame(frame) // corta la animación por progreso o el deslizamiento anterior
       const to: LngLat = [position.lng, position.lat]
       const from = motoOnMap ? motoRef.current : to
-      if (!motoOnMap) {
+      const primera = !motoOnMap
+      if (primera) {
         moto.setLngLat(to).addTo(map)
         motoOnMap = true
       }
@@ -323,6 +344,8 @@ const DeliveryMap = ({
         if (t < 1) frame = requestAnimationFrame(tick)
       }
       frame = requestAnimationFrame(tick)
+      // La primera posición reencuadra para que el repartidor quede a la vista
+      if (primera) fitRoute()
     }
     moveLiveRef.current = moveLive
 

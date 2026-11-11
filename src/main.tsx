@@ -7,8 +7,11 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import './index.css'
 import { theme } from './styles/theme'
 import { router } from './router/index.tsx'
+import { iniciarRenovacionSesion } from './services/renovacionSesion'
 
 const queryClient = new QueryClient()
+
+iniciarRenovacionSesion()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

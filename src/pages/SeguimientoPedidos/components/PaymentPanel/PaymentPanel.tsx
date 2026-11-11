@@ -53,9 +53,11 @@ const PaymentPanel = ({ order, onPagar }: PaymentPanelProps) => {
     : pagado
       ? {
           icono: FiCheckCircle,
-          texto: conDestino
-            ? `Pago confirmado. Estamos preparando tu pedido para entregarlo en ${order.destination}.`
-            : "Pago confirmado. Estamos preparando tu pedido; te contactaremos para acordar el punto de entrega.",
+          texto:
+            (conDestino
+              ? `Pago confirmado. Estamos preparando tu pedido para entregarlo en ${order.destination}.`
+              : "Pago confirmado. Estamos preparando tu pedido; te contactaremos para acordar el punto de entrega.") +
+            (order.conductor ? ` Tu repartidor es ${order.conductor}.` : ""),
         }
       : order.tieneComprobante
         ? { icono: FiClock, texto: "Estamos revisando tu comprobante. Te avisaremos por correo cuando se valide." }

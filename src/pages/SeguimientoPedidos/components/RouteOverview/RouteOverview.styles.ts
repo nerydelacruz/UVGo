@@ -60,6 +60,11 @@ export const MapContainer = styled.div`
   .mapboxgl-ctrl-attrib {
     font-size: 1rem;
   }
+
+  /* Mapbox atenúa los marcadores (niebla del horizonte, relieve 3D) con opacity en línea; la moto siempre va opaca */
+  .uvgo-moto {
+    opacity: 1 !important;
+  }
 `
 
 export const MapFallback = styled.p`
@@ -117,12 +122,12 @@ export const MotoPin = styled.span`
   }
 `
 
-// Moto 3D del repartidor (canvas de 42px); el halo pulsa bajo las ruedas, 9px debajo del centro
+// Moto 3D del repartidor; su tamaño lo fija el marcador según el zoom y el halo, en %, la acompaña bajo las ruedas
 export const Moto3dPin = styled.span`
   position: relative;
   display: block;
-  width: 4.2rem;
-  height: 4.2rem;
+  width: 5.6rem;
+  height: 5.6rem;
   pointer-events: none;
 
   canvas {
@@ -133,10 +138,10 @@ export const Moto3dPin = styled.span`
   &::before {
     content: "";
     position: absolute;
-    top: calc(50% + 0.9rem);
+    top: 71%;
     left: 50%;
-    width: 2.4rem;
-    height: 1.2rem;
+    width: 57%;
+    height: 28%;
     border: 2px solid ${(p) => p.theme.color.accent};
     border-radius: 50%;
     background: rgba(224, 122, 95, 0.3);

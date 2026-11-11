@@ -1,4 +1,5 @@
-export type Rol = "ESTUDIANTE" | "ADMINISTRADOR"
+// PILOTO: conductor; usa la app móvil (en la web solo ve un aviso)
+export type Rol = "ESTUDIANTE" | "ADMINISTRADOR" | "PILOTO"
 
 // Perfil del usuario autenticado (GET /api/v1/usuarios/me y respuesta del login)
 export interface Perfil {

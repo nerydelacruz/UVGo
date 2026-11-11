@@ -1,7 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { asignarPiloto, listarPilotos, quitarPiloto } from '@/services/pedido.service'
+import type { PilotoNuevo } from '@/models/pedido.model'
+import { asignarPiloto, crearPiloto, listarPilotos, quitarPiloto } from '@/services/pedido.service'
 
 export const usePilotos = () => useQuery({ queryKey: ['pilotos'], queryFn: listarPilotos })
+
+// Al crear un conductor se vuelve a pedir la lista para que aparezca en el selector
+export const useCrearPiloto = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (datos: PilotoNuevo) => crearPiloto(datos),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pilotos'] }),
+  })
+}
 
 export const useAsignarPiloto = () => {
   const queryClient = useQueryClient()

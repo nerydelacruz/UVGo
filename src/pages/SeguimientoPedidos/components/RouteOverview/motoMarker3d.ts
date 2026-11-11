@@ -1,4 +1,6 @@
 import * as THREE from "three"
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
+import motoUrl from "@/assets/moto.glb?url"
 import { create, createEnvironment } from "./uvgoMoto"
 
 export interface MotoMarker3d {
@@ -6,16 +8,31 @@ export interface MotoMarker3d {
   setHeading: (bearing: number) => void
   /** Orientación de la cámara del mapa, en grados */
   setView: (mapBearing: number, mapPitch: number) => void
+  /** Lado del marcador en píxeles (crece al acercar el mapa) */
+  setSize: (px: number) => void
   dispose: () => void
 }
 
-const SIZE_PX = 42
-const TARGET = new THREE.Vector3(-0.15, 0.95, 0) // centro aproximado de moto + caja
-const DISTANCE = 5.4
+export const SIZE_PX = 56
+const FOV = 30
 // Desde arriba la moto no se reconoce: la cámara siempre conserva algo de inclinación
 const MIN_TILT = 38
 const MAX_TILT = 68
 const rad = THREE.MathUtils.degToRad
+
+// El modelo (src/assets/moto.glb) se descarga una sola vez y cada marcador usa una copia.
+// Las copias comparten geometrías y materiales, así que no se liberan al quitar un marcador.
+let modelo: Promise<THREE.Group> | null = null
+const cargarModelo = () => {
+  modelo ??= new GLTFLoader()
+    .loadAsync(motoUrl)
+    .then((gltf) => gltf.scene)
+    .catch((error: unknown) => {
+      modelo = null // el siguiente marcador lo vuelve a intentar
+      throw error
+    })
+  return modelo
+}
 
 /**
  * Dibuja la moto 3D de UVGo dentro de `container` (el elemento del marcador de Mapbox).
@@ -29,7 +46,8 @@ export const createMotoMarker3d = (container: HTMLElement): MotoMarker3d | null 
   } catch {
     return null
   }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  // Se dibuja al doble de la resolución de la pantalla y el navegador lo reduce: bordes más limpios al acercar
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio * 2, 4))
   renderer.setSize(SIZE_PX, SIZE_PX)
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.shadowMap.enabled = true
@@ -42,7 +60,7 @@ export const createMotoMarker3d = (container: HTMLElement): MotoMarker3d | null 
   const sun = new THREE.DirectionalLight(0xffffff, 1.7)
   sun.position.set(4, 9, 5)
   sun.castShadow = true
-  sun.shadow.mapSize.set(512, 512)
+  sun.shadow.mapSize.set(1024, 1024)
   Object.assign(sun.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2 })
   scene.add(sun)
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.ShadowMaterial({ opacity: 0.22 }))
@@ -50,9 +68,45 @@ export const createMotoMarker3d = (container: HTMLElement): MotoMarker3d | null 
   floor.receiveShadow = true
   scene.add(floor)
 
-  const moto = create(THREE)
-  scene.add(moto.object)
-  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50)
+  // El rumbo gira este grupo; el modelo va dentro, centrado sobre el origen
+  const pivot = new THREE.Group()
+  scene.add(pivot)
+  const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 50)
+  const target = new THREE.Vector3(0, 0.6, 0)
+  let distance = 4
+
+  let disposed = false
+  let respaldo: ReturnType<typeof create> | null = null
+  // Encaja la cámara al tamaño del objeto, sea el modelo GLB o la moto dibujada por código.
+  // Se mide antes de meterlo en el grupo, para que el rumbo actual no deforme la caja.
+  const encuadrar = (objeto: THREE.Object3D) => {
+    const caja = new THREE.Box3().setFromObject(objeto)
+    const centro = caja.getCenter(new THREE.Vector3())
+    objeto.position.x -= centro.x
+    objeto.position.z -= centro.z
+    target.set(0, centro.y, 0)
+    const radio = caja.getSize(new THREE.Vector3()).length() / 2
+    distance = (radio / Math.sin(rad(FOV / 2))) * 1.02
+    render()
+  }
+
+  cargarModelo()
+    .then((base) => {
+      if (disposed) return
+      const copia = base.clone(true)
+      copia.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) o.castShadow = true
+      })
+      encuadrar(copia)
+      pivot.add(copia)
+    })
+    .catch(() => {
+      // Si el GLB no carga, se usa la moto dibujada por código
+      if (disposed) return
+      respaldo = create(THREE)
+      encuadrar(respaldo.object)
+      pivot.add(respaldo.object)
+    })
 
   let mapBearing = 0
   let mapPitch = 0
@@ -64,9 +118,9 @@ export const createMotoMarker3d = (container: HTMLElement): MotoMarker3d | null 
       // La cámara mira hacia "arriba de la pantalla", igual que el mapa
       const tilt = rad(THREE.MathUtils.clamp(MIN_TILT + mapPitch * 0.5, MIN_TILT, MAX_TILT))
       const b = rad(mapBearing)
-      const ground = DISTANCE * Math.sin(tilt)
-      camera.position.set(TARGET.x - Math.sin(b) * ground, TARGET.y + DISTANCE * Math.cos(tilt), TARGET.z + Math.cos(b) * ground)
-      camera.lookAt(TARGET)
+      const ground = distance * Math.sin(tilt)
+      camera.position.set(target.x - Math.sin(b) * ground, target.y + distance * Math.cos(tilt), target.z + Math.cos(b) * ground)
+      camera.lookAt(target)
       renderer.render(scene, camera)
     })
   }
@@ -78,7 +132,7 @@ export const createMotoMarker3d = (container: HTMLElement): MotoMarker3d | null 
   return {
     setHeading: (bearing) => {
       // Brújula → rumbo de la moto (0 = +X, contra reloj sobre Y)
-      moto.setHeading(Math.PI / 2 - rad(bearing))
+      pivot.rotation.y = Math.PI / 2 - rad(bearing)
       render()
     },
     setView: (bearing, pitch) => {
@@ -86,9 +140,17 @@ export const createMotoMarker3d = (container: HTMLElement): MotoMarker3d | null 
       mapPitch = pitch
       render()
     },
+    setSize: (px) => {
+      // setSize también ajusta el tamaño CSS del canvas; el contenedor lo acompaña para el halo
+      renderer.setSize(px, px)
+      container.style.width = `${px}px`
+      container.style.height = `${px}px`
+      render()
+    },
     dispose: () => {
+      disposed = true
       cancelAnimationFrame(frame)
-      moto.dispose()
+      respaldo?.dispose()
       floor.geometry.dispose()
       floor.material.dispose()
       environment.dispose()

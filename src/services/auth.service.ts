@@ -12,6 +12,12 @@ export const registrar = async (datos: RegistroRequest): Promise<Perfil> => {
   return data
 }
 
+// Cambia el token vigente por otro con el plazo completo (el backend no tiene refresh token)
+export const renovar = async (): Promise<TokenResponse> => {
+  const { data } = await api.post<TokenResponse>('/api/v1/auth/renovacion')
+  return data
+}
+
 // Revoca la sesión en el backend; el token deja de servir aunque no haya vencido
 export const logout = async (): Promise<void> => {
   await api.post('/api/v1/auth/logout')

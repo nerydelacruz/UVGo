@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { Navigate, useLocation } from "react-router-dom"
 import type { Rol } from "@/models/auth.model"
 import { isSesionVigente, useAuthStore } from "@/store/auth.store"
+import AvisoPiloto from "./AvisoPiloto"
 import { homePorRol } from "./vista"
 
 interface RequireAuthProps {
@@ -19,6 +20,8 @@ const RequireAuth = ({ children, rol }: RequireAuthProps) => {
   if (!isSesionVigente(token, expiresAt)) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
+  // Los conductores trabajan desde la app móvil: la web no tiene pantallas para ellos
+  if (usuario?.rol === "PILOTO") return <AvisoPiloto />
   if (rol && usuario?.rol !== rol) {
     return <Navigate to={homePorRol(usuario?.rol)} replace />
   }

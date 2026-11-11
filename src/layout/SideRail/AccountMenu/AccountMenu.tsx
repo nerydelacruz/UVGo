@@ -8,7 +8,7 @@ import { useAuthStore } from "@/store/auth.store"
 import { AvatarButton, Divider, Header, Item, Popover, Wrapper } from "./AccountMenu.styles"
 
 const iconos: Record<Vista, IconType> = { usuario: FiUser, admin: FiShield }
-const ROLES = { ESTUDIANTE: "Estudiante", ADMINISTRADOR: "Administrador" } as const
+const ROLES = { ESTUDIANTE: "Estudiante", ADMINISTRADOR: "Administrador", PILOTO: "Conductor" } as const
 
 const AccountMenu = () => {
   const [open, setOpen] = useState(false)
