@@ -12,8 +12,8 @@ export interface EstadoCarga {
 interface DashboardCardProps {
   titulo: ReactNode
   estado: EstadoCarga
-  // A dónde lleva la flecha; por ahora todo se gestiona en Solicitudes
-  to?: string
+  // A dónde lleva la flecha; por ahora todo se gestiona en Solicitudes. null = sin flecha
+  to?: string | null
   // Dato corto a la izquierda de la flecha (p. ej. "Últimos 7 días")
   extra?: ReactNode
   // Se estira para llenar el alto de su columna
@@ -83,9 +83,11 @@ const DashboardCard = ({
         <CardTitle>{titulo}</CardTitle>
         <HeaderEnd>
           {extra}
-          <Chevron to={to} aria-label="Ver detalle" title="Ver detalle">
-            <FiChevronRight size={18} aria-hidden />
-          </Chevron>
+          {to && (
+            <Chevron to={to} aria-label="Ver detalle" title="Ver detalle">
+              <FiChevronRight size={18} aria-hidden />
+            </Chevron>
+          )}
         </HeaderEnd>
       </CardHeader>
       <CardBody>

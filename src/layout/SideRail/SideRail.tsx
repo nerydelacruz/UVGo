@@ -1,5 +1,5 @@
 import type { IconType } from "react-icons"
-import { FiBarChart2, FiCreditCard, FiFileText, FiHome, FiInbox, FiNavigation, FiSettings, FiUser } from "react-icons/fi"
+import { FiBarChart2, FiFileText, FiHome, FiInbox, FiNavigation, FiSettings } from "react-icons/fi"
 import { useLocation, useNavigate } from "react-router-dom"
 import logo from "@/assets/logo.png"
 import { VISTAS, getVista, type Vista } from "@/layout/vista"
@@ -17,13 +17,12 @@ const items: Record<Vista, NavItem[]> = {
     { label: "Cotizar", icon: FiFileText, to: "/cotizar" },
     { label: "Mis solicitudes", icon: FiInbox, to: "/mis-solicitudes" },
     { label: "Seguimiento de pedidos", icon: FiNavigation, to: "/seguimiento-pedidos" },
-    { label: "Perfil", icon: FiUser },
-    { label: "Pagos", icon: FiCreditCard },
-    { label: "Analítica", icon: FiBarChart2 },
+    // Perfil, Pagos y Analítica se ocultan hasta que tengan pantalla (antes con FiUser, FiCreditCard y FiBarChart2)
   ],
   admin: [
     { label: "Inicio", icon: FiHome, to: "/admin", end: true },
     { label: "Solicitudes", icon: FiInbox, to: "/admin/solicitudes" },
+    { label: "Reportes", icon: FiBarChart2, to: "/admin/reportes" },
   ],
 }
 

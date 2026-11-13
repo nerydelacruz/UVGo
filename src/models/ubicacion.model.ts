@@ -6,4 +6,8 @@ export interface Ubicacion {
   rumbo: number | null
   // Hora (ISO) en que el servidor recibió la posición
   marca: string
+  // km/h promedio de los últimos segundos (lo calcula el servidor); null al arrancar o tras perder señal
+  velocidad: number | null
+  // Desde cuándo (ISO) el piloto no se mueve; null si va en movimiento
+  detenidoDesde: string | null
 }

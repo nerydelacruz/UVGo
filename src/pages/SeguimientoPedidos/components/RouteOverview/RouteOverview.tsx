@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { FiBox, FiCrosshair, FiInfo, FiLayers, FiMap, FiMaximize2, FiMinimize2, FiMinus, FiPlus, FiX } from "react-icons/fi"
+import { FiAlertTriangle, FiBox, FiCrosshair, FiInfo, FiLayers, FiMap, FiMaximize2, FiMinimize2, FiMinus, FiPlus, FiX } from "react-icons/fi"
 import { MdDeliveryDining } from "react-icons/md"
 import { routeProgress, statusLabel, warehouse, type Order } from "../../data"
 import { CardTitle, Muted, SquareButton } from "../../SeguimientoPedidos.styles"
 import DeliveryMap, { type DeliveryMapHandle, type MapStyle, type RouteInfo } from "./DeliveryMap"
 import { SIMULAR_REPARTIDOR } from "./simulacion"
+import { useSeguimientoVivo, type SeguimientoVivo } from "./useSeguimientoVivo"
 import { useUbicacionRepartidor } from "@/hooks/useUbicacionRepartidor"
 import {
   AlertChip,
@@ -30,7 +31,12 @@ type View = "route" | "moto" | "free"
 export interface RouteSummary {
   distanceKm: number
   etaMin: number
+  /** Avance real del repartidor; null mientras no publique su posición */
+  vivo: SeguimientoVivo | null
 }
+
+const hora = new Intl.DateTimeFormat("es-GT", { hour: "numeric", minute: "2-digit" })
+const km = (n: number) => `${n.toLocaleString("es-GT", { maximumFractionDigits: 1 })} km`
 
 interface RouteOverviewProps {
   order: Order
@@ -69,6 +75,10 @@ const RouteOverview = ({ order, className, titleExtra, footer }: RouteOverviewPr
   const distanceKm = info?.distanceKm ?? order.distanceKm
   const etaMin = Math.max(order.etaMin, Math.round(info?.durationMin ?? 0))
   const view = viewState.id === order.id ? viewState.view : "route"
+
+  // Avance sobre la ruta de Mapbox; si aún no llega (o falló), sobre la línea directa bodega → destino
+  const ruta = useMemo(() => info?.line ?? [warehouse.coords, order.destinationCoords], [info, order.destinationCoords])
+  const vivo = useSeguimientoVivo(ubicacion, ruta)
   const setView = (next: View) => setViewState({ id: order.id, view: next })
 
   // El mapa necesita recalcular su tamaño al entrar o salir de pantalla completa
@@ -93,7 +103,13 @@ const RouteOverview = ({ order, className, titleExtra, footer }: RouteOverviewPr
     if (next === "moto") mapRef.current?.showMoto()
   }
 
-  const arrivalLabel = isLive ? `Llega ${order.deliveryAt.replace(/^Hoy, /, "")}` : order.status === "entregado" ? "Entregado" : "Destino"
+  const arrivalLabel = vivo
+    ? `Llega ~${hora.format(vivo.llegada)}`
+    : isLive
+      ? `Llega ${order.deliveryAt.replace(/^Hoy, /, "")}`
+      : order.status === "entregado"
+        ? "Entregado"
+        : "Destino"
 
   return (
     <MapCard className={className} expanded={expanded} aria-label="Ruta de entrega">
@@ -162,7 +178,7 @@ const RouteOverview = ({ order, className, titleExtra, footer }: RouteOverviewPr
           destination={order.destinationCoords}
           progress={routeProgress(order.status)}
           livePosition={livePosition}
-          remainingLabel={isLive ? `${order.etaMin} min restantes` : undefined}
+          remainingLabel={vivo ? `${vivo.minutosRestantes} min restantes` : isLive ? `${order.etaMin} min restantes` : undefined}
           arrivalLabel={arrivalLabel}
           mapStyle={mapStyle}
           is3d={is3d}
@@ -173,7 +189,14 @@ const RouteOverview = ({ order, className, titleExtra, footer }: RouteOverviewPr
         />
 
         <LiveBadge live={enVivo}>
-          <LiveDot live={enVivo} /> {ubicacion ? "En vivo" : isLive ? "En vivo · hace 1 min" : statusLabel[order.status]}
+          <LiveDot live={enVivo} />{" "}
+          {vivo?.velocidad != null
+            ? `En vivo · ${Math.round(vivo.velocidad)} km/h`
+            : ubicacion
+              ? "En vivo"
+              : isLive
+                ? "En vivo · hace 1 min"
+                : statusLabel[order.status]}
         </LiveBadge>
 
         {panelOpen ? (
@@ -196,13 +219,28 @@ const RouteOverview = ({ order, className, titleExtra, footer }: RouteOverviewPr
               <dt>Salida</dt><dd>{order.origin}</dd>
               <dt>Destino</dt><dd>{order.destination}</dd>
               <dt>Distancia total</dt><dd>{distanceKm.toFixed(1)} km</dd>
-              <dt>Tiempo estimado</dt><dd>{isLive ? `${order.etaMin} min` : order.status === "entregado" ? "Completado" : `~${etaMin} min`}</dd>
+              {vivo ? (
+                <>
+                  <dt>Velocidad</dt><dd>{vivo.velocidad === null ? "Sin medir" : `${Math.round(vivo.velocidad)} km/h`}</dd>
+                  <dt>Avance</dt><dd>{Math.round(vivo.avance.fraccion * 100)} % · {km(vivo.avance.recorridoKm)} de {km(vivo.avance.totalKm)}</dd>
+                  <dt>Falta</dt><dd>{km(vivo.avance.restanteKm)} · ~{vivo.minutosRestantes} min</dd>
+                  <dt>Llegada estimada</dt><dd>{hora.format(vivo.llegada)}</dd>
+                </>
+              ) : (
+                <>
+                  <dt>Tiempo estimado</dt><dd>{isLive ? `${order.etaMin} min` : order.status === "entregado" ? "Completado" : `~${etaMin} min`}</dd>
+                </>
+              )}
               <dt>Repartidor</dt><dd>{order.conductor ?? (order.status === "entregado" ? "Equipo UVGo" : "Por asignar")}</dd>
             </DetailList>
 
-            {/* El backend todavía no registra la ruta: no se muestran alertas de tráfico ni clima */}
+            {/* Avisos del recorrido en vivo: señal perdida, piloto detenido o fuera de la ruta */}
             <AlertRow>
-              <AlertChip tone="neutral"><FiInfo size={13} /> Sin alertas activas</AlertChip>
+              {vivo?.alerta ? (
+                <AlertChip tone={vivo.alerta.tono} role="status"><FiAlertTriangle size={13} /> {vivo.alerta.texto}</AlertChip>
+              ) : (
+                <AlertChip tone="neutral"><FiInfo size={13} /> Sin alertas activas</AlertChip>
+              )}
             </AlertRow>
           </DetailPanel>
         ) : (
@@ -211,7 +249,7 @@ const RouteOverview = ({ order, className, titleExtra, footer }: RouteOverviewPr
           </ReopenButton>
         )}
 
-        {footer?.({ distanceKm, etaMin })}
+        {footer?.({ distanceKm, etaMin, vivo })}
 
         <ZoomControls aria-label="Zoom del mapa">
           <button type="button" aria-label="Acercar" onClick={() => mapRef.current?.zoomIn()}><FiPlus size={16} /></button>

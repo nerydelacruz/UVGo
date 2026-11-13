@@ -5,6 +5,7 @@ import CotizarInicio from "@/pages/CotizarInicio/CotizarInicio";
 import MisSolicitudes from "@/pages/MisSolicitudes/MisSolicitudes";
 import AdminHome from "@/pages/Admin/AdminHome";
 import Solicitudes from "@/pages/Admin/Solicitudes/Solicitudes";
+import Reportes from "@/pages/Admin/Reportes/Reportes";
 import Login from "@/pages/Login/Login";
 import { Layout } from "@/layout";
 import RequireAuth from "@/layout/RequireAuth";
@@ -48,6 +49,10 @@ export const router = createBrowserRouter([
             {
                 path:'admin/solicitudes',
                 element:(<RequireAuth rol="ADMINISTRADOR"><Solicitudes/></RequireAuth>)
+            },
+            {
+                path:'admin/reportes',
+                element:(<RequireAuth rol="ADMINISTRADOR"><Reportes/></RequireAuth>)
             }
         ]
 

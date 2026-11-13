@@ -29,6 +29,8 @@ export interface LivePosition {
 export interface RouteInfo {
   distanceKm: number
   durationMin: number
+  /** Trazo de la ruta [lng, lat]; sirve para medir el avance del repartidor */
+  line: LngLat[]
 }
 
 interface DeliveryMapProps {
@@ -133,7 +135,7 @@ const fetchRoute = async (origin: LngLat, destination: LngLat): Promise<{ line: 
     if (route?.geometry?.coordinates?.length) {
       return {
         line: route.geometry.coordinates,
-        info: { distanceKm: route.distance / 1000, durationMin: route.duration / 60 },
+        info: { distanceKm: route.distance / 1000, durationMin: route.duration / 60, line: route.geometry.coordinates },
       }
     }
   } catch {

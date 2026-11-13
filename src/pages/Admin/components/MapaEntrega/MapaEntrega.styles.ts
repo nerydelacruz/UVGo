@@ -60,13 +60,15 @@ export const Cifras = styled.div`
   }
 `
 
-// Línea de la ruta: bodega (punto oscuro) → destino (punto coral). Sin repartidor asignado no hay avance.
-export const Linea = styled.div`
+// Línea de la ruta: bodega (punto oscuro) → destino (punto coral). Con "avance" (0–1) el tramo recorrido va sólido.
+export const Linea = styled.div<{ avance?: number }>`
   position: relative;
   height: 0.4rem;
   margin: 0 0.5rem;
   border-radius: ${(p) => p.theme.radius.full};
-  background: repeating-linear-gradient(90deg, ${(p) => p.theme.color.addAction} 0 0.8rem, transparent 0.8rem 1.4rem);
+  background:
+    linear-gradient(90deg, ${(p) => p.theme.color.addAction} 0 ${(p) => (p.avance ?? 0) * 100}%, transparent 0),
+    repeating-linear-gradient(90deg, ${(p) => p.theme.color.addAction} 0 0.8rem, transparent 0.8rem 1.4rem);
 
   &::before,
   &::after {
@@ -90,4 +92,18 @@ export const Linea = styled.div`
     right: -0.6rem;
     background: ${(p) => p.theme.color.accent};
   }
+`
+
+// Dónde va el repartidor sobre la línea (left se pone en línea con el avance)
+export const Repartidor = styled.span`
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 3px solid white;
+  border-radius: ${(p) => p.theme.radius.full};
+  background: ${(p) => p.theme.color.addAction};
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+  transform: translate(-50%, -50%);
 `
